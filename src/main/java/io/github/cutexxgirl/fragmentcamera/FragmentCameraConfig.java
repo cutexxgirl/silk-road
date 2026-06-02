@@ -41,11 +41,11 @@ public final class FragmentCameraConfig {
 
     public static final ModConfigSpec.DoubleValue FIRST_PERSON_VERTICAL_FREQUENCY = BUILDER
             .comment("First-person vertical spring frequency. Lower values give a heavier jump spring.")
-            .defineInRange("firstPersonVerticalFrequency", 6.0D, 0.1D, 30.0D);
+            .defineInRange("firstPersonVerticalFrequency", 1.8D, 0.1D, 30.0D);
 
     public static final ModConfigSpec.DoubleValue FIRST_PERSON_VERTICAL_DAMPING = BUILDER
             .comment("First-person vertical spring damping ratio.")
-            .defineInRange("firstPersonVerticalDamping", 0.75D, 0.1D, 3.0D);
+            .defineInRange("firstPersonVerticalDamping", 1.05D, 0.1D, 3.0D);
 
     public static final ModConfigSpec.DoubleValue THIRD_PERSON_POSITION_FREQUENCY = BUILDER
             .comment("Third-person position spring frequency. Lower values make the camera lag farther behind.")
@@ -55,9 +55,37 @@ public final class FragmentCameraConfig {
             .comment("Third-person position spring damping ratio.")
             .defineInRange("thirdPersonPositionDamping", 0.85D, 0.1D, 3.0D);
 
+    public static final ModConfigSpec.DoubleValue THIRD_PERSON_VERTICAL_FREQUENCY = BUILDER
+            .comment("Third-person vertical spring frequency. Lower values smooth sudden height changes more.")
+            .defineInRange("thirdPersonVerticalFrequency", 2.0D, 0.1D, 30.0D);
+
+    public static final ModConfigSpec.DoubleValue THIRD_PERSON_VERTICAL_DAMPING = BUILDER
+            .comment("Third-person vertical spring damping ratio.")
+            .defineInRange("thirdPersonVerticalDamping", 1.0D, 0.1D, 3.0D);
+
+    public static final ModConfigSpec.DoubleValue THIRD_PERSON_ORBIT_FREQUENCY = BUILDER
+            .comment("Third-person orbit spring frequency. Lower values add more mouse-turn smoothing.")
+            .defineInRange("thirdPersonOrbitFrequency", 5.0D, 0.1D, 30.0D);
+
+    public static final ModConfigSpec.DoubleValue THIRD_PERSON_ORBIT_DAMPING = BUILDER
+            .comment("Third-person orbit spring damping ratio.")
+            .defineInRange("thirdPersonOrbitDamping", 0.9D, 0.1D, 3.0D);
+
     public static final ModConfigSpec.DoubleValue MAX_LAG_DISTANCE = BUILDER
             .comment("Maximum distance the camera spring can lag from the target position.")
             .defineInRange("maxLagDistance", 2.5D, 0.0D, 16.0D);
+
+    public static final ModConfigSpec.DoubleValue MAX_ORBIT_LAG_DISTANCE = BUILDER
+            .comment("Maximum orbit lag distance from mouse turning in third person.")
+            .defineInRange("maxOrbitLagDistance", 0.45D, 0.0D, 4.0D);
+
+    public static final ModConfigSpec.BooleanValue IGNORE_CROUCH_HEIGHT_IN_THIRD_PERSON = BUILDER
+            .comment("Keep the third-person camera anchor at standing eye height while crouching.")
+            .define("ignoreCrouchHeightInThirdPerson", true);
+
+    public static final ModConfigSpec.BooleanValue PEHKUI_COMPAT_ENABLED = BUILDER
+            .comment("Scale Shoulder Surfing camera offsets with Pehkui entity size when Pehkui is installed.")
+            .define("pehkuiCompatEnabled", true);
 
     public static final ModConfigSpec.DoubleValue RESET_DISTANCE = BUILDER
             .comment("Reset springs when the target camera position jumps farther than this many blocks.")

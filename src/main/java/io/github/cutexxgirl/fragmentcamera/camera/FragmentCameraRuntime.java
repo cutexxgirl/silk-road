@@ -3,10 +3,13 @@ package io.github.cutexxgirl.fragmentcamera.camera;
 import java.util.UUID;
 
 import io.github.cutexxgirl.fragmentcamera.FragmentCameraConfig;
+import io.github.cutexxgirl.fragmentcamera.compat.PehkuiCompat;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.phys.Vec3;
 
@@ -16,7 +19,9 @@ public final class FragmentCameraRuntime {
     private final SpringScalar yawSpring = new SpringScalar();
     private final SpringScalar pitchSpring = new SpringScalar();
     private final SpringScalar ySpring = new SpringScalar();
-    private final SpringVec3 anchorSpring = new SpringVec3();
+    private final SpringVec3 anchorXZSpring = new SpringVec3();
+    private final SpringScalar anchorYSpring = new SpringScalar();
+    private final SpringVec3 orbitSpring = new SpringVec3();
 
     private BlockGetter lastLevel;
     private UUID lastEntityId;
@@ -61,9 +66,9 @@ public final class FragmentCameraRuntime {
 
         CameraTransform transform = firstPerson
                 ? updateFirstPerson(rawPosition, rawYRot, rawXRot, rawRoll, deltaSeconds)
-                : updateThirdPerson(cameraEntity, rawPosition, rawYRot, rawXRot, rawRoll, deltaSeconds, partialTick);
+                : updateThirdPerson(cameraEntity, rawPosition, rawYRot, rawXRot, rawRoll, deltaSeconds, partialTick, aimingState.shoulderSurfing());
 
-        lastAnchor = cameraEntity.getEyePosition(partialTick);
+        lastAnchor = getStableAnchor(cameraEntity, partialTick);
         lastDetached = detached;
         lastMirrored = mirrored;
         lastLevel = level;
@@ -92,7 +97,7 @@ public final class FragmentCameraRuntime {
                 FragmentCameraConfig.FIRST_PERSON_VERTICAL_FREQUENCY.get(),
                 FragmentCameraConfig.FIRST_PERSON_VERTICAL_DAMPING.get());
 
-        if (Math.abs(smoothedY - rawPosition.y) < 0.001D) {
+        if (Math.abs(smoothedY - rawPosition.y) < 0.0001D) {
             smoothedY = rawPosition.y;
         }
 
@@ -103,21 +108,40 @@ public final class FragmentCameraRuntime {
         return new CameraTransform(position, (float) (rawYRot + yawOffset), (float) (rawXRot + pitchOffset), rawRoll, hasMeaningfulOffset(yawOffset, pitchOffset, yOffset));
     }
 
-    private CameraTransform updateThirdPerson(Entity cameraEntity, Vec3 rawPosition, float rawYRot, float rawXRot, float rawRoll, double deltaSeconds, float partialTick) {
-        Vec3 anchor = cameraEntity.getEyePosition(partialTick);
-        Vec3 rawCameraOffset = rawPosition.subtract(anchor);
-        Vec3 smoothedAnchor = anchorSpring.update(
-                anchor,
+    private CameraTransform updateThirdPerson(Entity cameraEntity, Vec3 rawPosition, float rawYRot, float rawXRot, float rawRoll, double deltaSeconds, float partialTick, boolean shoulderSurfing) {
+        Vec3 stableAnchor = getStableAnchor(cameraEntity, partialTick);
+        Vec3 vanillaEye = cameraEntity.getEyePosition(partialTick);
+        Vec3 rawCameraOffset = rawPosition.subtract(vanillaEye);
+
+        if (shoulderSurfing) {
+            rawCameraOffset = applyPehkuiThirdPersonScale(rawCameraOffset, cameraEntity, partialTick);
+        }
+
+        Vec3 smoothedOffset = orbitSpring.update(
+                rawCameraOffset,
+                deltaSeconds,
+                FragmentCameraConfig.THIRD_PERSON_ORBIT_FREQUENCY.get(),
+                FragmentCameraConfig.THIRD_PERSON_ORBIT_DAMPING.get());
+        Vec3 orbitLag = limitLength(smoothedOffset.subtract(rawCameraOffset), FragmentCameraConfig.MAX_ORBIT_LAG_DISTANCE.get()).scale(influence);
+
+        Vec3 smoothedAnchorXZ = anchorXZSpring.update(
+                new Vec3(stableAnchor.x, 0.0D, stableAnchor.z),
                 deltaSeconds,
                 FragmentCameraConfig.THIRD_PERSON_POSITION_FREQUENCY.get(),
                 FragmentCameraConfig.THIRD_PERSON_POSITION_DAMPING.get());
-        Vec3 anchorLag = limitLength(smoothedAnchor.subtract(anchor), FragmentCameraConfig.MAX_LAG_DISTANCE.get()).scale(influence);
-        Vec3 position = anchor.add(rawCameraOffset).add(anchorLag);
-        return new CameraTransform(position, rawYRot, rawXRot, rawRoll, anchorLag.lengthSqr() > 1.0E-8D);
+        double smoothedAnchorY = anchorYSpring.update(
+                stableAnchor.y,
+                deltaSeconds,
+                FragmentCameraConfig.THIRD_PERSON_VERTICAL_FREQUENCY.get(),
+                FragmentCameraConfig.THIRD_PERSON_VERTICAL_DAMPING.get());
+        Vec3 smoothedAnchor = new Vec3(smoothedAnchorXZ.x, smoothedAnchorY, smoothedAnchorXZ.z);
+        Vec3 anchorLag = limitLength(smoothedAnchor.subtract(stableAnchor), FragmentCameraConfig.MAX_LAG_DISTANCE.get()).scale(influence);
+        Vec3 position = stableAnchor.add(rawCameraOffset).add(anchorLag).add(orbitLag);
+        return new CameraTransform(position, rawYRot, rawXRot, rawRoll, anchorLag.lengthSqr() > 1.0E-8D || orbitLag.lengthSqr() > 1.0E-8D);
     }
 
     private boolean shouldReset(BlockGetter level, Entity entity, boolean detached, boolean mirrored, float partialTick) {
-        Vec3 anchor = entity.getEyePosition(partialTick);
+        Vec3 anchor = getStableAnchor(entity, partialTick);
         return !initialized
                 || lastLevel != level
                 || lastEntityId == null
@@ -130,7 +154,8 @@ public final class FragmentCameraRuntime {
     }
 
     private void reset(BlockGetter level, Entity entity, Vec3 rawPosition, float rawYRot, float rawXRot, boolean detached, boolean mirrored, float partialTick) {
-        Vec3 anchor = entity == null ? rawPosition : entity.getEyePosition(partialTick);
+        Vec3 anchor = entity == null ? rawPosition : getStableAnchor(entity, partialTick);
+        Vec3 rawCameraOffset = entity == null ? Vec3.ZERO : rawPosition.subtract(entity.getEyePosition(partialTick));
         lastLevel = level;
         lastEntityId = entity == null ? null : entity.getUUID();
         lastDetached = detached;
@@ -142,7 +167,9 @@ public final class FragmentCameraRuntime {
         yawSpring.reset(continuousYaw);
         pitchSpring.reset(rawXRot);
         ySpring.reset(rawPosition.y);
-        anchorSpring.reset(anchor);
+        anchorXZSpring.reset(new Vec3(anchor.x, 0.0D, anchor.z));
+        anchorYSpring.reset(anchor.y);
+        orbitSpring.reset(rawCameraOffset);
         initialized = true;
     }
 
@@ -172,6 +199,31 @@ public final class FragmentCameraRuntime {
         }
 
         return vector.normalize().scale(maxLength);
+    }
+
+    private static Vec3 getStableAnchor(Entity entity, float partialTick) {
+        if (FragmentCameraConfig.IGNORE_CROUCH_HEIGHT_IN_THIRD_PERSON.get() && entity instanceof Player player) {
+            Vec3 position = player.getPosition(partialTick);
+            double standingEyeHeight = player.getDimensions(Pose.STANDING).eyeHeight();
+
+            if (Math.abs(PehkuiCompat.getEyeHeightScale(player, partialTick) - 1.0F) > 0.0001F) {
+                standingEyeHeight = player.getDefaultDimensions(Pose.STANDING).eyeHeight() * PehkuiCompat.getEyeHeightScale(player, partialTick);
+            }
+
+            return position.add(0.0D, standingEyeHeight, 0.0D);
+        }
+
+        return entity.getEyePosition(partialTick);
+    }
+
+    private static Vec3 applyPehkuiThirdPersonScale(Vec3 rawCameraOffset, Entity entity, float partialTick) {
+        float scale = PehkuiCompat.getThirdPersonScale(entity, partialTick);
+
+        if (Math.abs(scale - 1.0F) < 0.0001F) {
+            return rawCameraOffset;
+        }
+
+        return rawCameraOffset.scale(scale);
     }
 
     private static boolean hasMeaningfulOffset(double yawOffset, double pitchOffset, double yOffset) {
