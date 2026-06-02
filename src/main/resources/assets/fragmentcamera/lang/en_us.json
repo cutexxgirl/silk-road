@@ -1,0 +1,7 @@
+{
+  "fragmentcamera.configuration.title": "FragmentCamera Config",
+  "fragmentcamera.configuration.section.fragmentcamera-client.toml": "FragmentCamera Config",
+  "fragmentcamera.configuration.section.fragmentcamera-client.toml.title": "FragmentCamera Config",
+  "fragmentcamera.configuration.enabled": "Enabled",
+  "fragmentcamera.configuration.smoothingStrength": "Smoothing Strength"
+}
