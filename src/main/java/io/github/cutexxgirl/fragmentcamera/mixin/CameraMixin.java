@@ -23,7 +23,7 @@ public abstract class CameraMixin {
     @Inject(method = "setup", at = @At("RETURN"))
     private void fragmentcamera$applySpringCamera(BlockGetter level, Entity cameraEntity, boolean detached, boolean mirrored, float partialTick, CallbackInfo callbackInfo) {
         Camera camera = (Camera) (Object) this;
-        CameraTransform transform = FragmentCameraRuntime.INSTANCE.update(camera, level, cameraEntity);
+        CameraTransform transform = FragmentCameraRuntime.INSTANCE.update(camera, level, cameraEntity, detached, mirrored, partialTick);
 
         if (transform.changed()) {
             this.setPosition(transform.position());

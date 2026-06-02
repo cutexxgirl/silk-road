@@ -1,5 +1,7 @@
 package io.github.cutexxgirl.fragmentcamera.compat;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 
 import io.github.cutexxgirl.fragmentcamera.FragmentCamera;
@@ -7,10 +9,10 @@ import net.neoforged.fml.ModList;
 
 public final class ShoulderSurfingCompat {
     private static boolean attempted;
-    private static Method getInstanceMethod;
-    private static Method isAimingMethod;
-    private static Method isShoulderSurfingMethod;
-    private static Method isFreeLookingMethod;
+    private static Object instance;
+    private static MethodHandle isAimingHandle;
+    private static MethodHandle isShoulderSurfingHandle;
+    private static MethodHandle isFreeLookingHandle;
 
     private ShoulderSurfingCompat() {
     }
@@ -22,17 +24,16 @@ public final class ShoulderSurfingCompat {
 
         initialize();
 
-        if (getInstanceMethod == null) {
+        if (instance == null) {
             return State.EMPTY;
         }
 
         try {
-            Object instance = getInstanceMethod.invoke(null);
             return new State(
-                    invokeBoolean(instance, isAimingMethod),
-                    invokeBoolean(instance, isShoulderSurfingMethod),
-                    invokeBoolean(instance, isFreeLookingMethod));
-        } catch (ReflectiveOperationException | LinkageError exception) {
+                    invokeBoolean(isAimingHandle),
+                    invokeBoolean(isShoulderSurfingHandle),
+                    invokeBoolean(isFreeLookingHandle));
+        } catch (Throwable exception) {
             FragmentCamera.LOGGER.debug("Failed to read Shoulder Surfing state", exception);
             return State.EMPTY;
         }
@@ -47,23 +48,24 @@ public final class ShoulderSurfingCompat {
 
         try {
             Class<?> shoulderSurfing = Class.forName("com.github.exopandora.shouldersurfing.api.client.ShoulderSurfing");
-            getInstanceMethod = shoulderSurfing.getMethod("getInstance");
-            Object instance = getInstanceMethod.invoke(null);
+            MethodHandles.Lookup lookup = MethodHandles.publicLookup();
+            Method getInstanceMethod = shoulderSurfing.getMethod("getInstance");
+            instance = getInstanceMethod.invoke(null);
             Class<?> instanceClass = instance.getClass();
-            isAimingMethod = instanceClass.getMethod("isAiming");
-            isShoulderSurfingMethod = instanceClass.getMethod("isShoulderSurfing");
-            isFreeLookingMethod = instanceClass.getMethod("isFreeLooking");
+            isAimingHandle = lookup.unreflect(instanceClass.getMethod("isAiming")).bindTo(instance);
+            isShoulderSurfingHandle = lookup.unreflect(instanceClass.getMethod("isShoulderSurfing")).bindTo(instance);
+            isFreeLookingHandle = lookup.unreflect(instanceClass.getMethod("isFreeLooking")).bindTo(instance);
         } catch (ReflectiveOperationException | LinkageError exception) {
             FragmentCamera.LOGGER.debug("Shoulder Surfing API is not available for FragmentCamera reflection", exception);
-            getInstanceMethod = null;
-            isAimingMethod = null;
-            isShoulderSurfingMethod = null;
-            isFreeLookingMethod = null;
+            instance = null;
+            isAimingHandle = null;
+            isShoulderSurfingHandle = null;
+            isFreeLookingHandle = null;
         }
     }
 
-    private static boolean invokeBoolean(Object instance, Method method) throws ReflectiveOperationException {
-        return method != null && Boolean.TRUE.equals(method.invoke(instance));
+    private static boolean invokeBoolean(MethodHandle methodHandle) throws Throwable {
+        return methodHandle != null && Boolean.TRUE.equals((Boolean) methodHandle.invoke());
     }
 
     public record State(boolean aiming, boolean shoulderSurfing, boolean freeLooking) {
