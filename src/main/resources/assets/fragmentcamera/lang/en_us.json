@@ -3,5 +3,19 @@
   "fragmentcamera.configuration.section.fragmentcamera-client.toml": "FragmentCamera Config",
   "fragmentcamera.configuration.section.fragmentcamera-client.toml.title": "FragmentCamera Config",
   "fragmentcamera.configuration.enabled": "Enabled",
-  "fragmentcamera.configuration.smoothingStrength": "Smoothing Strength"
+  "fragmentcamera.configuration.firstPersonRotationEnabled": "First-Person Rotation",
+  "fragmentcamera.configuration.firstPersonVerticalEnabled": "First-Person Vertical Spring",
+  "fragmentcamera.configuration.thirdPersonEnabled": "Third-Person Camera Lag",
+  "fragmentcamera.configuration.disableWhileAiming": "Disable While Aiming",
+  "fragmentcamera.configuration.aimBlendOutSpeed": "Aiming Blend-Out Speed",
+  "fragmentcamera.configuration.firstPersonRotationFrequency": "First-Person Rotation Frequency",
+  "fragmentcamera.configuration.firstPersonRotationDamping": "First-Person Rotation Damping",
+  "fragmentcamera.configuration.firstPersonVerticalFrequency": "First-Person Vertical Frequency",
+  "fragmentcamera.configuration.firstPersonVerticalDamping": "First-Person Vertical Damping",
+  "fragmentcamera.configuration.thirdPersonPositionFrequency": "Third-Person Position Frequency",
+  "fragmentcamera.configuration.thirdPersonPositionDamping": "Third-Person Position Damping",
+  "fragmentcamera.configuration.maxLagDistance": "Maximum Lag Distance",
+  "fragmentcamera.configuration.resetDistance": "Reset Distance",
+  "fragmentcamera.configuration.aimingItemNamespaces": "Aiming Item Namespaces",
+  "fragmentcamera.configuration.aimingItemIds": "Aiming Item IDs"
 }
