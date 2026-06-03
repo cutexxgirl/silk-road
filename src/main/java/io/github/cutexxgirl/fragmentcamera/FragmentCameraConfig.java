@@ -23,6 +23,10 @@ public final class FragmentCameraConfig {
             .comment("Enable third-person camera position lag.")
             .define("thirdPersonEnabled", true);
 
+    public static final ModConfigSpec.BooleanValue THIRD_PERSON_ROTATION_ENABLED = BUILDER
+            .comment("Enable visual third-person yaw and pitch smoothing without moving the camera orbit.")
+            .define("thirdPersonRotationEnabled", true);
+
     public static final ModConfigSpec.BooleanValue DISABLE_WHILE_AIMING = BUILDER
             .comment("Smoothly disable FragmentCamera offsets while aiming.")
             .define("disableWhileAiming", true);
@@ -70,6 +74,14 @@ public final class FragmentCameraConfig {
     public static final ModConfigSpec.DoubleValue THIRD_PERSON_VERTICAL_SNAP_THRESHOLD = BUILDER
             .comment("Snap third-person vertical smoothing to the target under this offset.")
             .defineInRange("thirdPersonVerticalSnapThreshold", 0.004D, 0.0D, 0.1D);
+
+    public static final ModConfigSpec.DoubleValue THIRD_PERSON_ROTATION_FREQUENCY = BUILDER
+            .comment("Third-person rotation spring frequency. Higher values are more responsive.")
+            .defineInRange("thirdPersonRotationFrequency", 8.0D, 0.1D, 30.0D);
+
+    public static final ModConfigSpec.DoubleValue THIRD_PERSON_ROTATION_DAMPING = BUILDER
+            .comment("Third-person rotation spring damping ratio.")
+            .defineInRange("thirdPersonRotationDamping", 1.0D, 0.1D, 3.0D);
 
     public static final ModConfigSpec.BooleanValue EXPERIMENTAL_THIRD_PERSON_RIG_ENABLED = BUILDER
             .comment("Use FragmentCamera's experimental third-person rig instead of vanilla final camera position. Rotation is not smoothed yet.")

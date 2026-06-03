@@ -19,6 +19,8 @@ public final class FragmentCameraRuntime {
 
     private final SpringScalar yawSpring = new SpringScalar();
     private final SpringScalar pitchSpring = new SpringScalar();
+    private final SpringScalar thirdPersonYawSpring = new SpringScalar();
+    private final SpringScalar thirdPersonPitchSpring = new SpringScalar();
     private final SpringVec3 anchorXZSpring = new SpringVec3();
     private final ThirdPersonCameraRig thirdPersonRig = new ThirdPersonCameraRig();
 
@@ -28,7 +30,9 @@ public final class FragmentCameraRuntime {
     private boolean lastMirrored;
     private Vec3 lastAnchor;
     private float lastRawYaw;
+    private float lastThirdPersonRawYaw;
     private double continuousYaw;
+    private double continuousThirdPersonYaw;
     private double visualY;
     private double thirdPersonVisualY;
     private double influence;
@@ -77,13 +81,13 @@ public final class FragmentCameraRuntime {
         boolean blocked = FragmentCameraConfig.DISABLE_WHILE_AIMING.get() && (aimingState.aiming() || aimingState.freeLooking());
         boolean active = firstPerson
                 ? FragmentCameraConfig.FIRST_PERSON_ROTATION_ENABLED.get() || FragmentCameraConfig.FIRST_PERSON_VERTICAL_ENABLED.get()
-                : FragmentCameraConfig.THIRD_PERSON_ENABLED.get();
+                : FragmentCameraConfig.THIRD_PERSON_ENABLED.get() || FragmentCameraConfig.THIRD_PERSON_ROTATION_ENABLED.get();
         double targetInfluence = active && !blocked ? 1.0D : 0.0D;
         influence = approachExp(influence, targetInfluence, FragmentCameraConfig.AIM_BLEND_OUT_SPEED.get(), deltaSeconds);
 
         CameraTransform transform = firstPerson
                 ? updateFirstPerson(rawPosition, rawYRot, rawXRot, rawRoll, deltaSeconds)
-                : updateThirdPerson(level, cameraEntity, rawPosition, rawYRot, rawXRot, rawRoll, partialTick, aimingState.shoulderSurfing());
+                : updateThirdPerson(level, cameraEntity, rawPosition, rawYRot, rawXRot, rawRoll, deltaSeconds, partialTick, aimingState.shoulderSurfing());
 
         lastAnchor = getStableAnchor(cameraEntity, partialTick);
         lastDetached = detached;
@@ -99,7 +103,6 @@ public final class FragmentCameraRuntime {
         Minecraft minecraft = Minecraft.getInstance();
 
         if (!FragmentCameraConfig.ENABLED.get()
-                || !FragmentCameraConfig.THIRD_PERSON_ENABLED.get()
                 || cameraEntity == null
                 || minecraft.isPaused()
                 || shouldBypassThirdPerson(cameraEntity, minecraft)) {
@@ -108,19 +111,19 @@ public final class FragmentCameraRuntime {
             return shoulderOffset;
         }
 
-        double deltaSeconds = frameDeltaSeconds();
+        if (!FragmentCameraConfig.THIRD_PERSON_ENABLED.get()) {
+            shoulderSurfingOffsetHandledThisFrame = true;
+            return shoulderOffset;
+        }
 
         if (shouldReset(level, cameraEntity, true, false, partialTick)) {
             reset(level, cameraEntity, camera.getPosition(), camera.getYRot(), camera.getXRot(), true, false, partialTick);
         }
 
-        AimingDetector.State aimingState = AimingDetector.getState(minecraft);
-        boolean blocked = FragmentCameraConfig.DISABLE_WHILE_AIMING.get() && (aimingState.aiming() || aimingState.freeLooking());
-        double targetInfluence = blocked ? 0.0D : 1.0D;
-        influence = approachExp(influence, targetInfluence, FragmentCameraConfig.AIM_BLEND_OUT_SPEED.get(), deltaSeconds);
-
         Vec3 stableAnchor = getStableAnchor(cameraEntity, partialTick);
-        Vec3 anchorLag = updateThirdPersonAnchorLag(cameraEntity, partialTick).scale(influence);
+        Vec3 anchorLag = FragmentCameraConfig.THIRD_PERSON_ENABLED.get()
+                ? updateThirdPersonAnchorLag(cameraEntity, partialTick).scale(influence)
+                : Vec3.ZERO;
         lastAnchor = stableAnchor;
         lastDetached = true;
         lastMirrored = false;
@@ -169,29 +172,33 @@ public final class FragmentCameraRuntime {
         return new CameraTransform(position, (float) (rawYRot + yawOffset), (float) (rawXRot + pitchOffset), rawRoll, hasMeaningfulOffset(yawOffset, pitchOffset, yOffset));
     }
 
-    private CameraTransform updateThirdPerson(BlockGetter level, Entity cameraEntity, Vec3 rawPosition, float rawYRot, float rawXRot, float rawRoll, float partialTick, boolean shoulderSurfing) {
+    private CameraTransform updateThirdPerson(BlockGetter level, Entity cameraEntity, Vec3 rawPosition, float rawYRot, float rawXRot, float rawRoll, double deltaSeconds, float partialTick, boolean shoulderSurfing) {
         Vec3 stableAnchor = getStableAnchor(cameraEntity, partialTick);
         Vec3 vanillaEye = cameraEntity.getEyePosition(partialTick);
         Vec3 rawCameraOffset = rawPosition.subtract(stableAnchor);
+        RotationTransform rotation = updateThirdPersonRotation(rawYRot, rawXRot, deltaSeconds);
 
         if (shoulderSurfing && shoulderSurfingOffsetHandledThisFrame) {
-            return CameraTransform.unchanged(rawPosition, rawYRot, rawXRot, rawRoll);
+            return new CameraTransform(rawPosition, rotation.yRot(), rotation.xRot(), rawRoll, rotation.changed());
         }
 
-        Vec3 anchorLag = updateThirdPersonAnchorLag(cameraEntity, partialTick).scale(influence);
+        Vec3 anchorLag = FragmentCameraConfig.THIRD_PERSON_ENABLED.get()
+                ? updateThirdPersonAnchorLag(cameraEntity, partialTick).scale(influence)
+                : Vec3.ZERO;
 
         if (shoulderSurfing) {
             Vec3 position = rawPosition.add(anchorLag);
-            return new CameraTransform(position, rawYRot, rawXRot, rawRoll, anchorLag.lengthSqr() > 1.0E-8D);
+            return new CameraTransform(position, rotation.yRot(), rotation.xRot(), rawRoll, anchorLag.lengthSqr() > 1.0E-8D || rotation.changed());
         }
 
         if (FragmentCameraConfig.EXPERIMENTAL_THIRD_PERSON_RIG_ENABLED.get()) {
-            return thirdPersonRig.update(level, cameraEntity, stableAnchor, rawPosition, rawYRot, rawXRot, rawRoll, anchorLag, partialTick);
+            CameraTransform transform = thirdPersonRig.update(level, cameraEntity, stableAnchor, rawPosition, rawYRot, rawXRot, rawRoll, anchorLag, partialTick);
+            return new CameraTransform(transform.position(), rotation.yRot(), rotation.xRot(), transform.roll(), transform.changed() || rotation.changed());
         }
 
         rawCameraOffset = applyPehkuiThirdPersonScale(rawCameraOffset, cameraEntity, partialTick);
         Vec3 position = stableAnchor.add(rawCameraOffset).add(anchorLag);
-        return new CameraTransform(position, rawYRot, rawXRot, rawRoll, anchorLag.lengthSqr() > 1.0E-8D || stableAnchor.distanceToSqr(vanillaEye) > 1.0E-8D);
+        return new CameraTransform(position, rotation.yRot(), rotation.xRot(), rawRoll, anchorLag.lengthSqr() > 1.0E-8D || stableAnchor.distanceToSqr(vanillaEye) > 1.0E-8D || rotation.changed());
     }
 
     private boolean shouldReset(BlockGetter level, Entity entity, boolean detached, boolean mirrored, float partialTick) {
@@ -215,12 +222,16 @@ public final class FragmentCameraRuntime {
         lastMirrored = mirrored;
         lastAnchor = anchor;
         lastRawYaw = rawYRot;
+        lastThirdPersonRawYaw = rawYRot;
         continuousYaw = rawYRot;
+        continuousThirdPersonYaw = rawYRot;
         visualY = rawPosition.y;
         thirdPersonVisualY = anchor.y;
         influence = 0.0D;
         yawSpring.reset(continuousYaw);
         pitchSpring.reset(rawXRot);
+        thirdPersonYawSpring.reset(continuousThirdPersonYaw);
+        thirdPersonPitchSpring.reset(rawXRot);
         anchorXZSpring.reset(new Vec3(anchor.x, 0.0D, anchor.z));
         thirdPersonBypassedLastFrame = false;
         shoulderSurfingOffsetHandledThisFrame = false;
@@ -290,6 +301,26 @@ public final class FragmentCameraRuntime {
         return limitLength(smoothedAnchor.subtract(stableAnchor), FragmentCameraConfig.MAX_LAG_DISTANCE.get());
     }
 
+    private RotationTransform updateThirdPersonRotation(float rawYRot, float rawXRot, double deltaSeconds) {
+        continuousThirdPersonYaw += Mth.degreesDifference(lastThirdPersonRawYaw, rawYRot);
+        lastThirdPersonRawYaw = rawYRot;
+
+        double smoothedYaw = thirdPersonYawSpring.update(
+                continuousThirdPersonYaw,
+                deltaSeconds,
+                FragmentCameraConfig.THIRD_PERSON_ROTATION_FREQUENCY.get(),
+                FragmentCameraConfig.THIRD_PERSON_ROTATION_DAMPING.get());
+        double smoothedPitch = thirdPersonPitchSpring.update(
+                rawXRot,
+                deltaSeconds,
+                FragmentCameraConfig.THIRD_PERSON_ROTATION_FREQUENCY.get(),
+                FragmentCameraConfig.THIRD_PERSON_ROTATION_DAMPING.get());
+
+        double yawOffset = FragmentCameraConfig.THIRD_PERSON_ROTATION_ENABLED.get() ? (smoothedYaw - continuousThirdPersonYaw) * influence : 0.0D;
+        double pitchOffset = FragmentCameraConfig.THIRD_PERSON_ROTATION_ENABLED.get() ? (smoothedPitch - rawXRot) * influence : 0.0D;
+        return new RotationTransform((float) (rawYRot + yawOffset), (float) (rawXRot + pitchOffset), hasMeaningfulRotationOffset(yawOffset, pitchOffset));
+    }
+
     private static Vec3 worldLagToShoulderOffset(Camera camera, Vec3 worldLag) {
         Vec3 left = vectorToVec3(camera.getLeftVector());
         Vec3 up = vectorToVec3(camera.getUpVector());
@@ -337,5 +368,12 @@ public final class FragmentCameraRuntime {
 
     private static boolean hasMeaningfulOffset(double yawOffset, double pitchOffset, double yOffset) {
         return Math.abs(yawOffset) > 1.0E-4D || Math.abs(pitchOffset) > 1.0E-4D || Math.abs(yOffset) > 1.0E-5D;
+    }
+
+    private static boolean hasMeaningfulRotationOffset(double yawOffset, double pitchOffset) {
+        return Math.abs(yawOffset) > 1.0E-4D || Math.abs(pitchOffset) > 1.0E-4D;
+    }
+
+    private record RotationTransform(float yRot, float xRot, boolean changed) {
     }
 }
