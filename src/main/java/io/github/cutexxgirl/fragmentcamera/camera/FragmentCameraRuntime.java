@@ -160,11 +160,6 @@ public final class FragmentCameraRuntime {
 
         AimingDetector.State aimingState = AimingDetector.getState(minecraft);
 
-        if (aimingState.shoulderSurfing()) {
-            resetThirdPersonRotation(rawYRot, rawXRot);
-            return CameraTransform.unchanged(rawPosition, rawYRot, rawXRot, rawRoll);
-        }
-
         if (shouldReset(level, cameraEntity, detached, mirrored, partialTick)) {
             reset(level, cameraEntity, rawPosition, rawYRot, rawXRot, detached, mirrored, partialTick);
         }
