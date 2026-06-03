@@ -57,4 +57,14 @@ public abstract class CameraMixin {
             this.setRotation(transform.yRot(), transform.xRot(), transform.roll());
         }
     }
+
+    @Inject(method = "setup", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Camera;move(FFF)V", ordinal = 0))
+    private void fragmentcamera$applyThirdPersonRotationBeforeMove(BlockGetter level, Entity cameraEntity, boolean detached, boolean mirrored, float partialTick, CallbackInfo callbackInfo) {
+        Camera camera = (Camera) (Object) this;
+        CameraTransform transform = FragmentCameraRuntime.INSTANCE.prepareThirdPersonRotation(camera, level, cameraEntity, detached, mirrored, partialTick);
+
+        if (transform.changed()) {
+            this.setRotation(transform.yRot(), transform.xRot(), transform.roll());
+        }
+    }
 }

@@ -24,7 +24,7 @@ public final class FragmentCameraConfig {
             .define("thirdPersonEnabled", true);
 
     public static final ModConfigSpec.BooleanValue THIRD_PERSON_ROTATION_ENABLED = BUILDER
-            .comment("Enable visual third-person yaw and pitch smoothing without moving the camera orbit.")
+            .comment("Enable visual third-person yaw and pitch smoothing before vanilla places the camera orbit.")
             .define("thirdPersonRotationEnabled", true);
 
     public static final ModConfigSpec.BooleanValue DISABLE_WHILE_AIMING = BUILDER
