@@ -10,6 +10,8 @@
   "fragmentcamera.configuration.aimBlendOutSpeed": "Aiming Blend-Out Speed",
   "fragmentcamera.configuration.firstPersonRotationFrequency": "First-Person Rotation Frequency",
   "fragmentcamera.configuration.firstPersonRotationDamping": "First-Person Rotation Damping",
+  "fragmentcamera.configuration.firstPersonVerticalResponse": "First-Person Vertical Response",
+  "fragmentcamera.configuration.firstPersonVerticalSnapThreshold": "First-Person Vertical Snap Threshold",
   "fragmentcamera.configuration.firstPersonVerticalFrequency": "First-Person Vertical Frequency",
   "fragmentcamera.configuration.firstPersonVerticalDamping": "First-Person Vertical Damping",
   "fragmentcamera.configuration.thirdPersonPositionFrequency": "Third-Person Position Frequency",
@@ -22,6 +24,9 @@
   "fragmentcamera.configuration.maxOrbitLagDistance": "Maximum Orbit Lag Distance",
   "fragmentcamera.configuration.ignoreCrouchHeightInThirdPerson": "Ignore Crouch Height In Third Person",
   "fragmentcamera.configuration.pehkuiCompatEnabled": "Pehkui Compatibility",
+  "fragmentcamera.configuration.experimentalPlayerModelSmoothing": "Experimental Player Model Smoothing",
+  "fragmentcamera.configuration.playerModelVerticalResponse": "Player Model Vertical Response",
+  "fragmentcamera.configuration.playerModelMaxYOffset": "Player Model Max Y Offset",
   "fragmentcamera.configuration.resetDistance": "Reset Distance",
   "fragmentcamera.configuration.aimingItemNamespaces": "Aiming Item Namespaces",
   "fragmentcamera.configuration.aimingItemIds": "Aiming Item IDs"

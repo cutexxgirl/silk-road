@@ -33,11 +33,19 @@ public final class FragmentCameraConfig {
 
     public static final ModConfigSpec.DoubleValue FIRST_PERSON_ROTATION_FREQUENCY = BUILDER
             .comment("First-person rotation spring frequency. Higher values are more responsive.")
-            .defineInRange("firstPersonRotationFrequency", 7.0D, 0.1D, 30.0D);
+            .defineInRange("firstPersonRotationFrequency", 9.0D, 0.1D, 30.0D);
 
     public static final ModConfigSpec.DoubleValue FIRST_PERSON_ROTATION_DAMPING = BUILDER
             .comment("First-person rotation spring damping ratio.")
-            .defineInRange("firstPersonRotationDamping", 0.9D, 0.1D, 3.0D);
+            .defineInRange("firstPersonRotationDamping", 1.0D, 0.1D, 3.0D);
+
+    public static final ModConfigSpec.DoubleValue FIRST_PERSON_VERTICAL_RESPONSE = BUILDER
+            .comment("First-person vertical exponential response. Higher values settle faster.")
+            .defineInRange("firstPersonVerticalResponse", 14.0D, 1.0D, 80.0D);
+
+    public static final ModConfigSpec.DoubleValue FIRST_PERSON_VERTICAL_SNAP_THRESHOLD = BUILDER
+            .comment("Snap first-person vertical smoothing to the target under this offset.")
+            .defineInRange("firstPersonVerticalSnapThreshold", 0.004D, 0.0D, 0.1D);
 
     public static final ModConfigSpec.DoubleValue FIRST_PERSON_VERTICAL_FREQUENCY = BUILDER
             .comment("First-person vertical spring frequency. Lower values give a heavier jump spring.")
@@ -49,15 +57,15 @@ public final class FragmentCameraConfig {
 
     public static final ModConfigSpec.DoubleValue THIRD_PERSON_POSITION_FREQUENCY = BUILDER
             .comment("Third-person position spring frequency. Lower values make the camera lag farther behind.")
-            .defineInRange("thirdPersonPositionFrequency", 4.0D, 0.1D, 30.0D);
+            .defineInRange("thirdPersonPositionFrequency", 5.0D, 0.1D, 30.0D);
 
     public static final ModConfigSpec.DoubleValue THIRD_PERSON_POSITION_DAMPING = BUILDER
             .comment("Third-person position spring damping ratio.")
-            .defineInRange("thirdPersonPositionDamping", 0.85D, 0.1D, 3.0D);
+            .defineInRange("thirdPersonPositionDamping", 0.9D, 0.1D, 3.0D);
 
     public static final ModConfigSpec.DoubleValue THIRD_PERSON_VERTICAL_FREQUENCY = BUILDER
             .comment("Third-person vertical spring frequency. Lower values smooth sudden height changes more.")
-            .defineInRange("thirdPersonVerticalFrequency", 2.0D, 0.1D, 30.0D);
+            .defineInRange("thirdPersonVerticalFrequency", 2.4D, 0.1D, 30.0D);
 
     public static final ModConfigSpec.DoubleValue THIRD_PERSON_VERTICAL_DAMPING = BUILDER
             .comment("Third-person vertical spring damping ratio.")
@@ -86,6 +94,18 @@ public final class FragmentCameraConfig {
     public static final ModConfigSpec.BooleanValue PEHKUI_COMPAT_ENABLED = BUILDER
             .comment("Scale Shoulder Surfing camera offsets with Pehkui entity size when Pehkui is installed.")
             .define("pehkuiCompatEnabled", true);
+
+    public static final ModConfigSpec.BooleanValue EXPERIMENTAL_PLAYER_MODEL_SMOOTHING = BUILDER
+            .comment("Experimentally smooth the local player model vertically in third person. Render-only.")
+            .define("experimentalPlayerModelSmoothing", false);
+
+    public static final ModConfigSpec.DoubleValue PLAYER_MODEL_VERTICAL_RESPONSE = BUILDER
+            .comment("Local player model vertical smoothing response. Higher values settle faster.")
+            .defineInRange("playerModelVerticalResponse", 18.0D, 1.0D, 80.0D);
+
+    public static final ModConfigSpec.DoubleValue PLAYER_MODEL_MAX_Y_OFFSET = BUILDER
+            .comment("Maximum downward render-only offset for player model smoothing.")
+            .defineInRange("playerModelMaxYOffset", 0.22D, 0.0D, 1.0D);
 
     public static final ModConfigSpec.DoubleValue RESET_DISTANCE = BUILDER
             .comment("Reset springs when the target camera position jumps farther than this many blocks.")

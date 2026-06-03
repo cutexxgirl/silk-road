@@ -4,7 +4,8 @@
   "package": "io.github.cutexxgirl.fragmentcamera.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
-    "CameraMixin"
+    "CameraMixin",
+    "PlayerRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1
