@@ -11,12 +11,13 @@ public final class PlayerModelSmoother {
     public static final PlayerModelSmoother INSTANCE = new PlayerModelSmoother();
 
     private UUID lastPlayerId;
-    private double lastRawY;
+    private double lastTickY;
     private double visualY;
     private double targetY;
     private long lastFrameNanos;
     private boolean initialized;
     private boolean smoothingActive;
+    private boolean wasOnGround;
 
     private PlayerModelSmoother() {
     }
@@ -27,21 +28,27 @@ public final class PlayerModelSmoother {
             return 0.0D;
         }
 
-        double rawY = player.getPosition(partialTick).y;
+        double tickY = player.getY();
 
         if (!initialized || lastPlayerId == null || !lastPlayerId.equals(player.getUUID())) {
             reset(player, partialTick);
             return 0.0D;
         }
 
-        double deltaY = rawY - lastRawY;
+        double deltaY = tickY - lastTickY;
+        boolean onGround = player.onGround();
+        boolean groundedStep = onGround && wasOnGround;
 
-        if (deltaY > 0.03D && deltaY <= 1.1D) {
+        if (!onGround && !wasOnGround) {
+            smoothingActive = false;
+            visualY = tickY;
+            targetY = tickY;
+        } else if (groundedStep && deltaY > 0.03D && deltaY <= 1.1D) {
             if (!smoothingActive) {
-                visualY = lastRawY;
+                visualY = lastTickY;
             }
 
-            targetY = rawY;
+            targetY = tickY;
             smoothingActive = true;
         }
 
@@ -53,12 +60,13 @@ public final class PlayerModelSmoother {
                 smoothingActive = false;
             }
         } else {
-            visualY = rawY;
-            targetY = rawY;
+            visualY = tickY;
+            targetY = tickY;
         }
 
-        lastRawY = rawY;
-        return Mth.clamp(visualY - rawY, -FragmentCameraConfig.PLAYER_MODEL_MAX_Y_OFFSET.get(), 0.0D);
+        lastTickY = tickY;
+        wasOnGround = onGround;
+        return Mth.clamp(visualY - tickY, -FragmentCameraConfig.PLAYER_MODEL_MAX_Y_OFFSET.get(), 0.0D);
     }
 
     private boolean shouldSmooth(AbstractClientPlayer player) {
@@ -71,12 +79,13 @@ public final class PlayerModelSmoother {
     }
 
     private void reset(AbstractClientPlayer player, float partialTick) {
-        double rawY = player.getPosition(partialTick).y;
+        double tickY = player.getY();
         lastPlayerId = player.getUUID();
-        lastRawY = rawY;
-        visualY = rawY;
-        targetY = rawY;
+        lastTickY = tickY;
+        visualY = tickY;
+        targetY = tickY;
         smoothingActive = false;
+        wasOnGround = player.onGround();
         initialized = true;
     }
 

@@ -72,12 +72,12 @@ public final class FragmentCameraConfig {
             .defineInRange("thirdPersonVerticalDamping", 1.0D, 0.1D, 3.0D);
 
     public static final ModConfigSpec.DoubleValue THIRD_PERSON_ORBIT_FREQUENCY = BUILDER
-            .comment("Third-person orbit spring frequency. Lower values add more mouse-turn smoothing.")
-            .defineInRange("thirdPersonOrbitFrequency", 5.0D, 0.1D, 30.0D);
+            .comment("Third-person rotation spring frequency. Lower values add more mouse-turn smoothing.")
+            .defineInRange("thirdPersonOrbitFrequency", 9.0D, 0.1D, 30.0D);
 
     public static final ModConfigSpec.DoubleValue THIRD_PERSON_ORBIT_DAMPING = BUILDER
-            .comment("Third-person orbit spring damping ratio.")
-            .defineInRange("thirdPersonOrbitDamping", 0.9D, 0.1D, 3.0D);
+            .comment("Third-person rotation spring damping ratio.")
+            .defineInRange("thirdPersonOrbitDamping", 1.0D, 0.1D, 3.0D);
 
     public static final ModConfigSpec.DoubleValue MAX_LAG_DISTANCE = BUILDER
             .comment("Maximum distance the camera spring can lag from the target position.")

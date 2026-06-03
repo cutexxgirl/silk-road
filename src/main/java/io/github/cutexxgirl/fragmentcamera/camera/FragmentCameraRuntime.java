@@ -114,6 +114,22 @@ public final class FragmentCameraRuntime {
     }
 
     private CameraTransform updateThirdPerson(Entity cameraEntity, Vec3 rawPosition, float rawYRot, float rawXRot, float rawRoll, double deltaSeconds, float partialTick) {
+        continuousYaw += Mth.degreesDifference(lastRawYaw, rawYRot);
+        lastRawYaw = rawYRot;
+
+        double smoothedYaw = yawSpring.update(
+                continuousYaw,
+                deltaSeconds,
+                FragmentCameraConfig.THIRD_PERSON_ORBIT_FREQUENCY.get(),
+                FragmentCameraConfig.THIRD_PERSON_ORBIT_DAMPING.get());
+        double smoothedPitch = pitchSpring.update(
+                rawXRot,
+                deltaSeconds,
+                FragmentCameraConfig.THIRD_PERSON_ORBIT_FREQUENCY.get(),
+                FragmentCameraConfig.THIRD_PERSON_ORBIT_DAMPING.get());
+        double yawOffset = (smoothedYaw - continuousYaw) * influence;
+        double pitchOffset = (smoothedPitch - rawXRot) * influence;
+
         Vec3 stableAnchor = getStableAnchor(cameraEntity, partialTick);
         Vec3 smoothedAnchorXZ = anchorXZSpring.update(
                 new Vec3(stableAnchor.x, 0.0D, stableAnchor.z),
@@ -131,10 +147,10 @@ public final class FragmentCameraRuntime {
         verticalImpulse = Mth.clamp(approachExp(verticalImpulse, 0.0D, 18.0D, deltaSeconds), -0.45D, 0.45D);
         lastStableY = stableAnchor.y;
 
-        double yOffset = verticalImpulse * influence;
+        double yOffset = verticalImpulse * influence + getCrouchCancelY(cameraEntity, partialTick) * influence;
         Vec3 position = rawPosition.add(anchorLag).add(0.0D, yOffset, 0.0D);
-        boolean changed = anchorLag.lengthSqr() > 1.0E-8D || Math.abs(yOffset) > 1.0E-5D;
-        return new CameraTransform(position, rawYRot, rawXRot, rawRoll, changed);
+        boolean changed = anchorLag.lengthSqr() > 1.0E-8D || hasMeaningfulOffset(yawOffset, pitchOffset, yOffset);
+        return new CameraTransform(position, (float) (rawYRot + yawOffset), (float) (rawXRot + pitchOffset), rawRoll, changed);
     }
 
     private boolean shouldReset(BlockGetter level, Entity entity, boolean detached, boolean mirrored, float partialTick) {
@@ -200,16 +216,28 @@ public final class FragmentCameraRuntime {
     private static Vec3 getStableAnchor(Entity entity, float partialTick) {
         if (FragmentCameraConfig.IGNORE_CROUCH_HEIGHT_IN_THIRD_PERSON.get() && entity instanceof Player player) {
             Vec3 position = player.getPosition(partialTick);
-            double standingEyeHeight = player.getDimensions(Pose.STANDING).eyeHeight();
-
-            if (Math.abs(PehkuiCompat.getEyeHeightScale(player, partialTick) - 1.0F) > 0.0001F) {
-                standingEyeHeight = player.getDefaultDimensions(Pose.STANDING).eyeHeight() * PehkuiCompat.getEyeHeightScale(player, partialTick);
-            }
-
-            return position.add(0.0D, standingEyeHeight, 0.0D);
+            return position.add(0.0D, getStandingEyeHeight(player, partialTick), 0.0D);
         }
 
         return entity.getEyePosition(partialTick);
+    }
+
+    private static double getCrouchCancelY(Entity entity, float partialTick) {
+        if (!FragmentCameraConfig.IGNORE_CROUCH_HEIGHT_IN_THIRD_PERSON.get() || !(entity instanceof Player player)) {
+            return 0.0D;
+        }
+
+        return Math.max(0.0D, getStandingEyeHeight(player, partialTick) - player.getEyeHeight());
+    }
+
+    private static double getStandingEyeHeight(Player player, float partialTick) {
+        double standingEyeHeight = player.getDimensions(Pose.STANDING).eyeHeight();
+
+        if (Math.abs(PehkuiCompat.getEyeHeightScale(player, partialTick) - 1.0F) > 0.0001F) {
+            standingEyeHeight = player.getDefaultDimensions(Pose.STANDING).eyeHeight() * PehkuiCompat.getEyeHeightScale(player, partialTick);
+        }
+
+        return standingEyeHeight;
     }
 
     private static boolean isFree3DMovement(Entity entity, Minecraft minecraft) {
