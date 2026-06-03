@@ -83,6 +83,30 @@ public final class FragmentCameraConfig {
             .comment("Third-person rotation spring damping ratio.")
             .defineInRange("thirdPersonRotationDamping", 1.0D, 0.1D, 3.0D);
 
+    public static final ModConfigSpec.BooleanValue THIRD_PERSON_STEP_UP_SMOOTHING_ENABLED = BUILDER
+            .comment("Smooth only the local third-person player model root when stepping up blocks.")
+            .define("thirdPersonStepUpSmoothingEnabled", true);
+
+    public static final ModConfigSpec.DoubleValue THIRD_PERSON_STEP_UP_MIN_HEIGHT = BUILDER
+            .comment("Minimum upward tick movement treated as a visual step-up.")
+            .defineInRange("thirdPersonStepUpMinHeight", 0.05D, 0.0D, 0.5D);
+
+    public static final ModConfigSpec.DoubleValue THIRD_PERSON_STEP_UP_MAX_HEIGHT = BUILDER
+            .comment("Maximum upward tick movement treated as a visual step-up.")
+            .defineInRange("thirdPersonStepUpMaxHeight", 1.25D, 0.1D, 2.0D);
+
+    public static final ModConfigSpec.DoubleValue THIRD_PERSON_STEP_UP_RESPONSE = BUILDER
+            .comment("How quickly the visual player model catches up after a step-up.")
+            .defineInRange("thirdPersonStepUpResponse", 18.0D, 1.0D, 80.0D);
+
+    public static final ModConfigSpec.DoubleValue THIRD_PERSON_STEP_UP_SNAP_THRESHOLD = BUILDER
+            .comment("Snap visual step-up smoothing to the target under this offset.")
+            .defineInRange("thirdPersonStepUpSnapThreshold", 0.003D, 0.0D, 0.1D);
+
+    public static final ModConfigSpec.DoubleValue THIRD_PERSON_STEP_UP_RESET_DISTANCE = BUILDER
+            .comment("Reset visual player model smoothing when Y changes farther than this many blocks.")
+            .defineInRange("thirdPersonStepUpResetDistance", 2.0D, 0.5D, 16.0D);
+
     public static final ModConfigSpec.BooleanValue EXPERIMENTAL_THIRD_PERSON_RIG_ENABLED = BUILDER
             .comment("Use FragmentCamera's experimental third-person rig instead of vanilla final camera position. Rotation is not smoothed yet.")
             .define("experimentalThirdPersonRigEnabled", false);
