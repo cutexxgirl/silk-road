@@ -13,8 +13,10 @@ public final class PlayerModelSmoother {
     private UUID lastPlayerId;
     private double lastRawY;
     private double visualY;
+    private double targetY;
     private long lastFrameNanos;
     private boolean initialized;
+    private boolean smoothingActive;
 
     private PlayerModelSmoother() {
     }
@@ -34,10 +36,25 @@ public final class PlayerModelSmoother {
 
         double deltaY = rawY - lastRawY;
 
-        if (player.onGround() && deltaY > 0.0D && deltaY <= 1.1D) {
-            visualY = approachExp(visualY, rawY, FragmentCameraConfig.PLAYER_MODEL_VERTICAL_RESPONSE.get(), frameDeltaSeconds());
+        if (deltaY > 0.03D && deltaY <= 1.1D) {
+            if (!smoothingActive) {
+                visualY = lastRawY;
+            }
+
+            targetY = rawY;
+            smoothingActive = true;
+        }
+
+        if (smoothingActive) {
+            visualY = approachExp(visualY, targetY, FragmentCameraConfig.PLAYER_MODEL_VERTICAL_RESPONSE.get(), frameDeltaSeconds());
+
+            if (Math.abs(visualY - targetY) < 0.003D) {
+                visualY = targetY;
+                smoothingActive = false;
+            }
         } else {
             visualY = rawY;
+            targetY = rawY;
         }
 
         lastRawY = rawY;
@@ -49,7 +66,8 @@ public final class PlayerModelSmoother {
         return FragmentCameraConfig.EXPERIMENTAL_PLAYER_MODEL_SMOOTHING.get()
                 && minecraft.player == player
                 && !minecraft.options.getCameraType().isFirstPerson()
-                && !minecraft.isPaused();
+                && !minecraft.isPaused()
+                && !isFree3DMovement(player);
     }
 
     private void reset(AbstractClientPlayer player, float partialTick) {
@@ -57,6 +75,8 @@ public final class PlayerModelSmoother {
         lastPlayerId = player.getUUID();
         lastRawY = rawY;
         visualY = rawY;
+        targetY = rawY;
+        smoothingActive = false;
         initialized = true;
     }
 
@@ -76,5 +96,14 @@ public final class PlayerModelSmoother {
     private static double approachExp(double current, double target, double speed, double deltaSeconds) {
         double step = 1.0D - Math.exp(-Math.max(0.0D, speed) * deltaSeconds);
         return current + (target - current) * step;
+    }
+
+    private static boolean isFree3DMovement(AbstractClientPlayer player) {
+        return player.getAbilities().flying
+                || player.isFallFlying()
+                || player.isSpectator()
+                || player.noPhysics
+                || player.isPassenger()
+                || player.isSwimming();
     }
 }
