@@ -36,6 +36,9 @@ public final class FragmentCameraRuntime {
     private boolean initialized;
     private boolean thirdPersonBypassedLastFrame;
     private boolean shoulderSurfingOffsetHandledThisFrame;
+    private int lastThirdPersonTick = Integer.MIN_VALUE;
+    private Vec3 previousThirdPersonLag = Vec3.ZERO;
+    private Vec3 currentThirdPersonLag = Vec3.ZERO;
 
     private FragmentCameraRuntime() {
     }
@@ -80,7 +83,7 @@ public final class FragmentCameraRuntime {
 
         CameraTransform transform = firstPerson
                 ? updateFirstPerson(rawPosition, rawYRot, rawXRot, rawRoll, deltaSeconds)
-                : updateThirdPerson(level, cameraEntity, rawPosition, rawYRot, rawXRot, rawRoll, deltaSeconds, partialTick, aimingState.shoulderSurfing());
+                : updateThirdPerson(level, cameraEntity, rawPosition, rawYRot, rawXRot, rawRoll, partialTick, aimingState.shoulderSurfing());
 
         lastAnchor = getStableAnchor(cameraEntity, partialTick);
         lastDetached = detached;
@@ -117,7 +120,7 @@ public final class FragmentCameraRuntime {
         influence = approachExp(influence, targetInfluence, FragmentCameraConfig.AIM_BLEND_OUT_SPEED.get(), deltaSeconds);
 
         Vec3 stableAnchor = getStableAnchor(cameraEntity, partialTick);
-        Vec3 anchorLag = updateThirdPersonAnchorLag(stableAnchor, deltaSeconds).scale(influence);
+        Vec3 anchorLag = updateThirdPersonAnchorLag(cameraEntity, partialTick).scale(influence);
         lastAnchor = stableAnchor;
         lastDetached = true;
         lastMirrored = false;
@@ -166,7 +169,7 @@ public final class FragmentCameraRuntime {
         return new CameraTransform(position, (float) (rawYRot + yawOffset), (float) (rawXRot + pitchOffset), rawRoll, hasMeaningfulOffset(yawOffset, pitchOffset, yOffset));
     }
 
-    private CameraTransform updateThirdPerson(BlockGetter level, Entity cameraEntity, Vec3 rawPosition, float rawYRot, float rawXRot, float rawRoll, double deltaSeconds, float partialTick, boolean shoulderSurfing) {
+    private CameraTransform updateThirdPerson(BlockGetter level, Entity cameraEntity, Vec3 rawPosition, float rawYRot, float rawXRot, float rawRoll, float partialTick, boolean shoulderSurfing) {
         Vec3 stableAnchor = getStableAnchor(cameraEntity, partialTick);
         Vec3 vanillaEye = cameraEntity.getEyePosition(partialTick);
         Vec3 rawCameraOffset = rawPosition.subtract(stableAnchor);
@@ -175,7 +178,7 @@ public final class FragmentCameraRuntime {
             return CameraTransform.unchanged(rawPosition, rawYRot, rawXRot, rawRoll);
         }
 
-        Vec3 anchorLag = updateThirdPersonAnchorLag(stableAnchor, deltaSeconds).scale(influence);
+        Vec3 anchorLag = updateThirdPersonAnchorLag(cameraEntity, partialTick).scale(influence);
 
         if (shoulderSurfing) {
             Vec3 position = rawPosition.add(anchorLag);
@@ -221,6 +224,9 @@ public final class FragmentCameraRuntime {
         anchorXZSpring.reset(new Vec3(anchor.x, 0.0D, anchor.z));
         thirdPersonBypassedLastFrame = false;
         shoulderSurfingOffsetHandledThisFrame = false;
+        lastThirdPersonTick = entity == null ? Integer.MIN_VALUE : entity.tickCount;
+        previousThirdPersonLag = Vec3.ZERO;
+        currentThirdPersonLag = Vec3.ZERO;
         initialized = true;
     }
 
@@ -252,17 +258,29 @@ public final class FragmentCameraRuntime {
         return vector.normalize().scale(maxLength);
     }
 
-    private Vec3 updateThirdPersonAnchorLag(Vec3 stableAnchor, double deltaSeconds) {
+    private Vec3 updateThirdPersonAnchorLag(Entity entity, float partialTick) {
+        if (entity.tickCount != lastThirdPersonTick) {
+            Vec3 tickStableAnchor = getStableAnchor(entity, 1.0F);
+            previousThirdPersonLag = currentThirdPersonLag;
+            currentThirdPersonLag = updateThirdPersonAnchorLagForTick(tickStableAnchor);
+            lastThirdPersonTick = entity.tickCount;
+        }
+
+        Vec3 renderLag = previousThirdPersonLag.lerp(currentThirdPersonLag, Mth.clamp(partialTick, 0.0F, 1.0F));
+        return limitLength(renderLag, FragmentCameraConfig.MAX_LAG_DISTANCE.get());
+    }
+
+    private Vec3 updateThirdPersonAnchorLagForTick(Vec3 stableAnchor) {
         Vec3 smoothedAnchorXZ = anchorXZSpring.update(
                 new Vec3(stableAnchor.x, 0.0D, stableAnchor.z),
-                deltaSeconds,
+                1.0D / 20.0D,
                 FragmentCameraConfig.THIRD_PERSON_POSITION_FREQUENCY.get(),
                 FragmentCameraConfig.THIRD_PERSON_POSITION_DAMPING.get());
         thirdPersonVisualY = approachExp(
                 thirdPersonVisualY,
                 stableAnchor.y,
                 FragmentCameraConfig.THIRD_PERSON_VERTICAL_RESPONSE.get(),
-                deltaSeconds);
+                1.0D / 20.0D);
 
         if (Math.abs(thirdPersonVisualY - stableAnchor.y) < FragmentCameraConfig.THIRD_PERSON_VERTICAL_SNAP_THRESHOLD.get()) {
             thirdPersonVisualY = stableAnchor.y;
