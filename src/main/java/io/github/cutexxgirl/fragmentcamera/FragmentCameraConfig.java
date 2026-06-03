@@ -57,35 +57,15 @@ public final class FragmentCameraConfig {
 
     public static final ModConfigSpec.DoubleValue THIRD_PERSON_POSITION_FREQUENCY = BUILDER
             .comment("Third-person position spring frequency. Lower values make the camera lag farther behind.")
-            .defineInRange("thirdPersonPositionFrequency", 5.0D, 0.1D, 30.0D);
+            .defineInRange("thirdPersonPositionFrequency", 4.0D, 0.1D, 30.0D);
 
     public static final ModConfigSpec.DoubleValue THIRD_PERSON_POSITION_DAMPING = BUILDER
             .comment("Third-person position spring damping ratio.")
-            .defineInRange("thirdPersonPositionDamping", 0.9D, 0.1D, 3.0D);
-
-    public static final ModConfigSpec.DoubleValue THIRD_PERSON_VERTICAL_FREQUENCY = BUILDER
-            .comment("Third-person vertical spring frequency. Lower values smooth sudden height changes more.")
-            .defineInRange("thirdPersonVerticalFrequency", 2.4D, 0.1D, 30.0D);
-
-    public static final ModConfigSpec.DoubleValue THIRD_PERSON_VERTICAL_DAMPING = BUILDER
-            .comment("Third-person vertical spring damping ratio.")
-            .defineInRange("thirdPersonVerticalDamping", 1.0D, 0.1D, 3.0D);
-
-    public static final ModConfigSpec.DoubleValue THIRD_PERSON_ORBIT_FREQUENCY = BUILDER
-            .comment("Third-person orbit spring frequency. Lower values add more mouse-turn smoothing.")
-            .defineInRange("thirdPersonOrbitFrequency", 5.0D, 0.1D, 30.0D);
-
-    public static final ModConfigSpec.DoubleValue THIRD_PERSON_ORBIT_DAMPING = BUILDER
-            .comment("Third-person orbit spring damping ratio.")
-            .defineInRange("thirdPersonOrbitDamping", 0.9D, 0.1D, 3.0D);
+            .defineInRange("thirdPersonPositionDamping", 0.85D, 0.1D, 3.0D);
 
     public static final ModConfigSpec.DoubleValue MAX_LAG_DISTANCE = BUILDER
             .comment("Maximum distance the camera spring can lag from the target position.")
             .defineInRange("maxLagDistance", 2.5D, 0.0D, 16.0D);
-
-    public static final ModConfigSpec.DoubleValue MAX_ORBIT_LAG_DISTANCE = BUILDER
-            .comment("Maximum orbit lag distance from mouse turning in third person.")
-            .defineInRange("maxOrbitLagDistance", 0.45D, 0.0D, 4.0D);
 
     public static final ModConfigSpec.BooleanValue IGNORE_CROUCH_HEIGHT_IN_THIRD_PERSON = BUILDER
             .comment("Keep the third-person camera anchor at standing eye height while crouching.")
