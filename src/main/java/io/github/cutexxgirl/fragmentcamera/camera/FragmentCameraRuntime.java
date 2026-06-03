@@ -4,7 +4,6 @@ import java.util.UUID;
 
 import io.github.cutexxgirl.fragmentcamera.FragmentCameraConfig;
 import io.github.cutexxgirl.fragmentcamera.compat.PehkuiCompat;
-import io.github.cutexxgirl.fragmentcamera.compat.ShoulderSurfingCompat;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
@@ -13,6 +12,7 @@ import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Vector3f;
 
 public final class FragmentCameraRuntime {
     public static final FragmentCameraRuntime INSTANCE = new FragmentCameraRuntime();
@@ -35,6 +35,7 @@ public final class FragmentCameraRuntime {
     private long lastFrameNanos;
     private boolean initialized;
     private boolean thirdPersonBypassedLastFrame;
+    private boolean shoulderSurfingOffsetHandledThisFrame;
 
     private FragmentCameraRuntime() {
     }
@@ -87,7 +88,51 @@ public final class FragmentCameraRuntime {
         lastLevel = level;
         lastEntityId = cameraEntity.getUUID();
         initialized = true;
+        shoulderSurfingOffsetHandledThisFrame = false;
         return transform;
+    }
+
+    public Vec3 updateShoulderSurfingOffset(Camera camera, BlockGetter level, Entity cameraEntity, Vec3 shoulderOffset, float partialTick) {
+        Minecraft minecraft = Minecraft.getInstance();
+
+        if (!FragmentCameraConfig.ENABLED.get()
+                || !FragmentCameraConfig.THIRD_PERSON_ENABLED.get()
+                || cameraEntity == null
+                || minecraft.isPaused()
+                || shouldBypassThirdPerson(cameraEntity, minecraft)) {
+            reset(level, cameraEntity, camera.getPosition(), camera.getYRot(), camera.getXRot(), true, false, partialTick);
+            shoulderSurfingOffsetHandledThisFrame = true;
+            return shoulderOffset;
+        }
+
+        double deltaSeconds = frameDeltaSeconds();
+
+        if (shouldReset(level, cameraEntity, true, false, partialTick)) {
+            reset(level, cameraEntity, camera.getPosition(), camera.getYRot(), camera.getXRot(), true, false, partialTick);
+        }
+
+        AimingDetector.State aimingState = AimingDetector.getState(minecraft);
+        boolean blocked = FragmentCameraConfig.DISABLE_WHILE_AIMING.get() && (aimingState.aiming() || aimingState.freeLooking());
+        double targetInfluence = blocked ? 0.0D : 1.0D;
+        influence = approachExp(influence, targetInfluence, FragmentCameraConfig.AIM_BLEND_OUT_SPEED.get(), deltaSeconds);
+
+        Vec3 stableAnchor = getStableAnchor(cameraEntity, partialTick);
+        Vec3 anchorLag = updateThirdPersonAnchorLag(stableAnchor, deltaSeconds).scale(influence);
+        lastAnchor = stableAnchor;
+        lastDetached = true;
+        lastMirrored = false;
+        lastLevel = level;
+        lastEntityId = cameraEntity.getUUID();
+        initialized = true;
+        shoulderSurfingOffsetHandledThisFrame = true;
+
+        if (anchorLag.lengthSqr() <= 1.0E-8D) {
+            return shoulderOffset;
+        }
+
+        // Shoulder Surfing stores camera offset in its local left/up/back basis.
+        // Feeding the lag there keeps its transparency and pick logic in sync.
+        return shoulderOffset.add(worldLagToShoulderOffset(camera, anchorLag));
     }
 
     private CameraTransform updateFirstPerson(Vec3 rawPosition, float rawYRot, float rawXRot, float rawRoll, double deltaSeconds) {
@@ -125,38 +170,23 @@ public final class FragmentCameraRuntime {
         Vec3 stableAnchor = getStableAnchor(cameraEntity, partialTick);
         Vec3 vanillaEye = cameraEntity.getEyePosition(partialTick);
         Vec3 rawCameraOffset = rawPosition.subtract(stableAnchor);
-        boolean shoulderSurfingOwnedCamera = shoulderSurfing || ShoulderSurfingCompat.isLoaded();
 
-        if (shoulderSurfingOwnedCamera) {
-            anchorXZSpring.reset(new Vec3(stableAnchor.x, 0.0D, stableAnchor.z));
-            thirdPersonVisualY = stableAnchor.y;
+        if (shoulderSurfing && shoulderSurfingOffsetHandledThisFrame) {
             return CameraTransform.unchanged(rawPosition, rawYRot, rawXRot, rawRoll);
         }
 
-        rawCameraOffset = applyPehkuiThirdPersonScale(rawCameraOffset, cameraEntity, partialTick);
+        Vec3 anchorLag = updateThirdPersonAnchorLag(stableAnchor, deltaSeconds).scale(influence);
 
-        Vec3 smoothedAnchorXZ = anchorXZSpring.update(
-                new Vec3(stableAnchor.x, 0.0D, stableAnchor.z),
-                deltaSeconds,
-                FragmentCameraConfig.THIRD_PERSON_POSITION_FREQUENCY.get(),
-                FragmentCameraConfig.THIRD_PERSON_POSITION_DAMPING.get());
-        thirdPersonVisualY = approachExp(
-                thirdPersonVisualY,
-                stableAnchor.y,
-                FragmentCameraConfig.THIRD_PERSON_VERTICAL_RESPONSE.get(),
-                deltaSeconds);
-
-        if (Math.abs(thirdPersonVisualY - stableAnchor.y) < FragmentCameraConfig.THIRD_PERSON_VERTICAL_SNAP_THRESHOLD.get()) {
-            thirdPersonVisualY = stableAnchor.y;
+        if (shoulderSurfing) {
+            Vec3 position = rawPosition.add(anchorLag);
+            return new CameraTransform(position, rawYRot, rawXRot, rawRoll, anchorLag.lengthSqr() > 1.0E-8D);
         }
-
-        Vec3 smoothedAnchor = new Vec3(smoothedAnchorXZ.x, thirdPersonVisualY, smoothedAnchorXZ.z);
-        Vec3 anchorLag = limitLength(smoothedAnchor.subtract(stableAnchor), FragmentCameraConfig.MAX_LAG_DISTANCE.get()).scale(influence);
 
         if (FragmentCameraConfig.EXPERIMENTAL_THIRD_PERSON_RIG_ENABLED.get()) {
             return thirdPersonRig.update(level, cameraEntity, stableAnchor, rawPosition, rawYRot, rawXRot, rawRoll, anchorLag, partialTick);
         }
 
+        rawCameraOffset = applyPehkuiThirdPersonScale(rawCameraOffset, cameraEntity, partialTick);
         Vec3 position = stableAnchor.add(rawCameraOffset).add(anchorLag);
         return new CameraTransform(position, rawYRot, rawXRot, rawRoll, anchorLag.lengthSqr() > 1.0E-8D || stableAnchor.distanceToSqr(vanillaEye) > 1.0E-8D);
     }
@@ -190,6 +220,7 @@ public final class FragmentCameraRuntime {
         pitchSpring.reset(rawXRot);
         anchorXZSpring.reset(new Vec3(anchor.x, 0.0D, anchor.z));
         thirdPersonBypassedLastFrame = false;
+        shoulderSurfingOffsetHandledThisFrame = false;
         initialized = true;
     }
 
@@ -219,6 +250,37 @@ public final class FragmentCameraRuntime {
         }
 
         return vector.normalize().scale(maxLength);
+    }
+
+    private Vec3 updateThirdPersonAnchorLag(Vec3 stableAnchor, double deltaSeconds) {
+        Vec3 smoothedAnchorXZ = anchorXZSpring.update(
+                new Vec3(stableAnchor.x, 0.0D, stableAnchor.z),
+                deltaSeconds,
+                FragmentCameraConfig.THIRD_PERSON_POSITION_FREQUENCY.get(),
+                FragmentCameraConfig.THIRD_PERSON_POSITION_DAMPING.get());
+        thirdPersonVisualY = approachExp(
+                thirdPersonVisualY,
+                stableAnchor.y,
+                FragmentCameraConfig.THIRD_PERSON_VERTICAL_RESPONSE.get(),
+                deltaSeconds);
+
+        if (Math.abs(thirdPersonVisualY - stableAnchor.y) < FragmentCameraConfig.THIRD_PERSON_VERTICAL_SNAP_THRESHOLD.get()) {
+            thirdPersonVisualY = stableAnchor.y;
+        }
+
+        Vec3 smoothedAnchor = new Vec3(smoothedAnchorXZ.x, thirdPersonVisualY, smoothedAnchorXZ.z);
+        return limitLength(smoothedAnchor.subtract(stableAnchor), FragmentCameraConfig.MAX_LAG_DISTANCE.get());
+    }
+
+    private static Vec3 worldLagToShoulderOffset(Camera camera, Vec3 worldLag) {
+        Vec3 left = vectorToVec3(camera.getLeftVector());
+        Vec3 up = vectorToVec3(camera.getUpVector());
+        Vec3 look = vectorToVec3(camera.getLookVector());
+        return new Vec3(worldLag.dot(left), worldLag.dot(up), -worldLag.dot(look));
+    }
+
+    private static Vec3 vectorToVec3(Vector3f vector) {
+        return new Vec3(vector.x(), vector.y(), vector.z());
     }
 
     private static Vec3 getStableAnchor(Entity entity, float partialTick) {

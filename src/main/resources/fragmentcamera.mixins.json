@@ -2,9 +2,11 @@
   "required": true,
   "minVersion": "0.8",
   "package": "io.github.cutexxgirl.fragmentcamera.mixin",
+  "plugin": "io.github.cutexxgirl.fragmentcamera.mixin.FragmentCameraMixinPlugin",
   "compatibilityLevel": "JAVA_21",
   "client": [
-    "CameraMixin"
+    "CameraMixin",
+    "ShoulderSurfingCameraMixin"
   ],
   "injectors": {
     "defaultRequire": 1
