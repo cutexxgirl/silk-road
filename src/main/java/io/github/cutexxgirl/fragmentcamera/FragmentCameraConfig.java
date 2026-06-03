@@ -57,11 +57,27 @@ public final class FragmentCameraConfig {
 
     public static final ModConfigSpec.DoubleValue THIRD_PERSON_POSITION_FREQUENCY = BUILDER
             .comment("Third-person position spring frequency. Lower values make the camera lag farther behind.")
-            .defineInRange("thirdPersonPositionFrequency", 4.0D, 0.1D, 30.0D);
+            .defineInRange("thirdPersonPositionFrequency", 3.6D, 0.1D, 30.0D);
 
     public static final ModConfigSpec.DoubleValue THIRD_PERSON_POSITION_DAMPING = BUILDER
             .comment("Third-person position spring damping ratio.")
             .defineInRange("thirdPersonPositionDamping", 0.85D, 0.1D, 3.0D);
+
+    public static final ModConfigSpec.BooleanValue EXPERIMENTAL_THIRD_PERSON_RIG_ENABLED = BUILDER
+            .comment("Use FragmentCamera's experimental third-person rig instead of vanilla final camera position. Rotation is not smoothed yet.")
+            .define("experimentalThirdPersonRigEnabled", false);
+
+    public static final ModConfigSpec.DoubleValue THIRD_PERSON_RIG_MIN_DISTANCE = BUILDER
+            .comment("Minimum camera distance used by the experimental third-person rig.")
+            .defineInRange("thirdPersonRigMinDistance", 0.75D, 0.1D, 16.0D);
+
+    public static final ModConfigSpec.DoubleValue THIRD_PERSON_RIG_MAX_DISTANCE = BUILDER
+            .comment("Maximum camera distance used by the experimental third-person rig.")
+            .defineInRange("thirdPersonRigMaxDistance", 6.0D, 0.5D, 32.0D);
+
+    public static final ModConfigSpec.DoubleValue THIRD_PERSON_RIG_COLLISION_PADDING = BUILDER
+            .comment("Small distance kept from block collision when the experimental third-person rig clips the camera.")
+            .defineInRange("thirdPersonRigCollisionPadding", 0.08D, 0.0D, 0.5D);
 
     public static final ModConfigSpec.DoubleValue MAX_LAG_DISTANCE = BUILDER
             .comment("Maximum distance the camera spring can lag from the target position.")

@@ -19,6 +19,7 @@ public final class FragmentCameraRuntime {
     private final SpringScalar yawSpring = new SpringScalar();
     private final SpringScalar pitchSpring = new SpringScalar();
     private final SpringVec3 anchorSpring = new SpringVec3();
+    private final ThirdPersonCameraRig thirdPersonRig = new ThirdPersonCameraRig();
 
     private BlockGetter lastLevel;
     private UUID lastEntityId;
@@ -76,7 +77,7 @@ public final class FragmentCameraRuntime {
 
         CameraTransform transform = firstPerson
                 ? updateFirstPerson(rawPosition, rawYRot, rawXRot, rawRoll, deltaSeconds)
-                : updateThirdPerson(cameraEntity, rawPosition, rawYRot, rawXRot, rawRoll, deltaSeconds, partialTick);
+                : updateThirdPerson(level, cameraEntity, rawPosition, rawYRot, rawXRot, rawRoll, deltaSeconds, partialTick, aimingState.shoulderSurfing());
 
         lastAnchor = getStableAnchor(cameraEntity, partialTick);
         lastDetached = detached;
@@ -118,7 +119,7 @@ public final class FragmentCameraRuntime {
         return new CameraTransform(position, (float) (rawYRot + yawOffset), (float) (rawXRot + pitchOffset), rawRoll, hasMeaningfulOffset(yawOffset, pitchOffset, yOffset));
     }
 
-    private CameraTransform updateThirdPerson(Entity cameraEntity, Vec3 rawPosition, float rawYRot, float rawXRot, float rawRoll, double deltaSeconds, float partialTick) {
+    private CameraTransform updateThirdPerson(BlockGetter level, Entity cameraEntity, Vec3 rawPosition, float rawYRot, float rawXRot, float rawRoll, double deltaSeconds, float partialTick, boolean shoulderSurfing) {
         Vec3 stableAnchor = getStableAnchor(cameraEntity, partialTick);
         Vec3 vanillaEye = cameraEntity.getEyePosition(partialTick);
         Vec3 rawCameraOffset = rawPosition.subtract(vanillaEye);
@@ -129,6 +130,11 @@ public final class FragmentCameraRuntime {
                 FragmentCameraConfig.THIRD_PERSON_POSITION_FREQUENCY.get(),
                 FragmentCameraConfig.THIRD_PERSON_POSITION_DAMPING.get());
         Vec3 anchorLag = limitLength(smoothedAnchor.subtract(stableAnchor), FragmentCameraConfig.MAX_LAG_DISTANCE.get()).scale(influence);
+
+        if (FragmentCameraConfig.EXPERIMENTAL_THIRD_PERSON_RIG_ENABLED.get() && !shoulderSurfing) {
+            return thirdPersonRig.update(level, cameraEntity, stableAnchor, vanillaEye, rawPosition, rawYRot, rawXRot, rawRoll, anchorLag);
+        }
+
         Vec3 position = stableAnchor.add(rawCameraOffset).add(anchorLag);
         return new CameraTransform(position, rawYRot, rawXRot, rawRoll, anchorLag.lengthSqr() > 1.0E-8D || stableAnchor.distanceToSqr(vanillaEye) > 1.0E-8D);
     }
