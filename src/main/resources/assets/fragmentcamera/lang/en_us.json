@@ -16,6 +16,8 @@
   "fragmentcamera.configuration.firstPersonVerticalDamping": "First-Person Vertical Damping",
   "fragmentcamera.configuration.thirdPersonPositionFrequency": "Third-Person Position Frequency",
   "fragmentcamera.configuration.thirdPersonPositionDamping": "Third-Person Position Damping",
+  "fragmentcamera.configuration.thirdPersonVerticalResponse": "Third-Person Vertical Response",
+  "fragmentcamera.configuration.thirdPersonVerticalSnapThreshold": "Third-Person Vertical Snap Threshold",
   "fragmentcamera.configuration.experimentalThirdPersonRigEnabled": "Experimental Third-Person Rig",
   "fragmentcamera.configuration.thirdPersonRigMinDistance": "Third-Person Rig Min Distance",
   "fragmentcamera.configuration.thirdPersonRigMaxDistance": "Third-Person Rig Max Distance",

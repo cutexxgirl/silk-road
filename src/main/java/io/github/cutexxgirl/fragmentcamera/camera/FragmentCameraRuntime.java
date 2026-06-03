@@ -18,7 +18,7 @@ public final class FragmentCameraRuntime {
 
     private final SpringScalar yawSpring = new SpringScalar();
     private final SpringScalar pitchSpring = new SpringScalar();
-    private final SpringVec3 anchorSpring = new SpringVec3();
+    private final SpringVec3 anchorXZSpring = new SpringVec3();
     private final ThirdPersonCameraRig thirdPersonRig = new ThirdPersonCameraRig();
 
     private BlockGetter lastLevel;
@@ -29,6 +29,7 @@ public final class FragmentCameraRuntime {
     private float lastRawYaw;
     private double continuousYaw;
     private double visualY;
+    private double thirdPersonVisualY;
     private double influence;
     private long lastFrameNanos;
     private boolean initialized;
@@ -126,11 +127,22 @@ public final class FragmentCameraRuntime {
 
         rawCameraOffset = applyPehkuiThirdPersonScale(rawCameraOffset, cameraEntity, partialTick);
 
-        Vec3 smoothedAnchor = anchorSpring.update(
-                stableAnchor,
+        Vec3 smoothedAnchorXZ = anchorXZSpring.update(
+                new Vec3(stableAnchor.x, 0.0D, stableAnchor.z),
                 deltaSeconds,
                 FragmentCameraConfig.THIRD_PERSON_POSITION_FREQUENCY.get(),
                 FragmentCameraConfig.THIRD_PERSON_POSITION_DAMPING.get());
+        thirdPersonVisualY = approachExp(
+                thirdPersonVisualY,
+                stableAnchor.y,
+                FragmentCameraConfig.THIRD_PERSON_VERTICAL_RESPONSE.get(),
+                deltaSeconds);
+
+        if (Math.abs(thirdPersonVisualY - stableAnchor.y) < FragmentCameraConfig.THIRD_PERSON_VERTICAL_SNAP_THRESHOLD.get()) {
+            thirdPersonVisualY = stableAnchor.y;
+        }
+
+        Vec3 smoothedAnchor = new Vec3(smoothedAnchorXZ.x, thirdPersonVisualY, smoothedAnchorXZ.z);
         Vec3 anchorLag = limitLength(smoothedAnchor.subtract(stableAnchor), FragmentCameraConfig.MAX_LAG_DISTANCE.get()).scale(influence);
 
         if (FragmentCameraConfig.EXPERIMENTAL_THIRD_PERSON_RIG_ENABLED.get() && !shoulderSurfing) {
@@ -164,10 +176,11 @@ public final class FragmentCameraRuntime {
         lastRawYaw = rawYRot;
         continuousYaw = rawYRot;
         visualY = rawPosition.y;
+        thirdPersonVisualY = anchor.y;
         influence = 0.0D;
         yawSpring.reset(continuousYaw);
         pitchSpring.reset(rawXRot);
-        anchorSpring.reset(anchor);
+        anchorXZSpring.reset(new Vec3(anchor.x, 0.0D, anchor.z));
         thirdPersonBypassedLastFrame = false;
         initialized = true;
     }
@@ -218,10 +231,7 @@ public final class FragmentCameraRuntime {
     private static boolean shouldBypassThirdPerson(Entity entity, Minecraft minecraft) {
         return entity instanceof Player player
                 && minecraft.player == player
-                && (player.getAbilities().flying
-                || (player.getAbilities().mayfly && !player.onGround())
-                || player.isFallFlying()
-                || player.isSpectator()
+                && (player.isSpectator()
                 || player.noPhysics
                 || player.isPassenger()
                 || player.isSwimming());

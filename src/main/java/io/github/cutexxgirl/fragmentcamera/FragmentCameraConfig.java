@@ -63,6 +63,14 @@ public final class FragmentCameraConfig {
             .comment("Third-person position spring damping ratio.")
             .defineInRange("thirdPersonPositionDamping", 0.85D, 0.1D, 3.0D);
 
+    public static final ModConfigSpec.DoubleValue THIRD_PERSON_VERTICAL_RESPONSE = BUILDER
+            .comment("Third-person vertical exponential response. Higher values settle faster.")
+            .defineInRange("thirdPersonVerticalResponse", 14.0D, 1.0D, 80.0D);
+
+    public static final ModConfigSpec.DoubleValue THIRD_PERSON_VERTICAL_SNAP_THRESHOLD = BUILDER
+            .comment("Snap third-person vertical smoothing to the target under this offset.")
+            .defineInRange("thirdPersonVerticalSnapThreshold", 0.004D, 0.0D, 0.1D);
+
     public static final ModConfigSpec.BooleanValue EXPERIMENTAL_THIRD_PERSON_RIG_ENABLED = BUILDER
             .comment("Use FragmentCamera's experimental third-person rig instead of vanilla final camera position. Rotation is not smoothed yet.")
             .define("experimentalThirdPersonRigEnabled", false);
