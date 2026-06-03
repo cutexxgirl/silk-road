@@ -176,10 +176,12 @@ public final class FragmentCameraRuntime {
         Vec3 stableAnchor = getStableAnchor(cameraEntity, partialTick);
         Vec3 vanillaEye = cameraEntity.getEyePosition(partialTick);
         Vec3 rawCameraOffset = rawPosition.subtract(stableAnchor);
-        RotationTransform rotation = updateThirdPersonRotation(rawYRot, rawXRot, deltaSeconds);
+        RotationTransform rotation = shoulderSurfing
+                ? new RotationTransform(rawYRot, rawXRot, false)
+                : updateThirdPersonRotation(rawYRot, rawXRot, deltaSeconds);
 
         if (shoulderSurfing && shoulderSurfingOffsetHandledThisFrame) {
-            return new CameraTransform(rawPosition, rotation.yRot(), rotation.xRot(), rawRoll, rotation.changed());
+            return CameraTransform.unchanged(rawPosition, rawYRot, rawXRot, rawRoll);
         }
 
         Vec3 anchorLag = FragmentCameraConfig.THIRD_PERSON_ENABLED.get()
@@ -197,7 +199,9 @@ public final class FragmentCameraRuntime {
         }
 
         rawCameraOffset = applyPehkuiThirdPersonScale(rawCameraOffset, cameraEntity, partialTick);
-        Vec3 position = stableAnchor.add(rawCameraOffset).add(anchorLag);
+        Vec3 position = rotation.changed()
+                ? rebuildOrbitPosition(stableAnchor.add(anchorLag), rawCameraOffset.length(), rotation.yRot(), rotation.xRot())
+                : stableAnchor.add(rawCameraOffset).add(anchorLag);
         return new CameraTransform(position, rotation.yRot(), rotation.xRot(), rawRoll, anchorLag.lengthSqr() > 1.0E-8D || stableAnchor.distanceToSqr(vanillaEye) > 1.0E-8D || rotation.changed());
     }
 
@@ -319,6 +323,17 @@ public final class FragmentCameraRuntime {
         double yawOffset = FragmentCameraConfig.THIRD_PERSON_ROTATION_ENABLED.get() ? (smoothedYaw - continuousThirdPersonYaw) * influence : 0.0D;
         double pitchOffset = FragmentCameraConfig.THIRD_PERSON_ROTATION_ENABLED.get() ? (smoothedPitch - rawXRot) * influence : 0.0D;
         return new RotationTransform((float) (rawYRot + yawOffset), (float) (rawXRot + pitchOffset), hasMeaningfulRotationOffset(yawOffset, pitchOffset));
+    }
+
+    private static Vec3 rebuildOrbitPosition(Vec3 anchor, double distance, float yRot, float xRot) {
+        return anchor.subtract(forwardFromYawPitch(yRot, xRot).scale(distance));
+    }
+
+    private static Vec3 forwardFromYawPitch(float yRot, float xRot) {
+        double yaw = Math.toRadians(yRot);
+        double pitch = Math.toRadians(xRot);
+        double cosPitch = Math.cos(pitch);
+        return new Vec3(-Math.sin(yaw) * cosPitch, -Math.sin(pitch), Math.cos(yaw) * cosPitch).normalize();
     }
 
     private static Vec3 worldLagToShoulderOffset(Camera camera, Vec3 worldLag) {
