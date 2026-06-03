@@ -1,6 +1,7 @@
 package io.github.cutexxgirl.fragmentcamera.camera;
 
 import io.github.cutexxgirl.fragmentcamera.FragmentCameraConfig;
+import io.github.cutexxgirl.fragmentcamera.compat.PehkuiCompat;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ClipContext;
@@ -8,8 +9,8 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 public final class ThirdPersonCameraRig {
-    public CameraTransform update(BlockGetter level, Entity cameraEntity, Vec3 stableAnchor, Vec3 vanillaEye, Vec3 rawPosition, float rawYRot, float rawXRot, float rawRoll, Vec3 anchorLag) {
-        double rawDistance = rawPosition.distanceTo(vanillaEye);
+    public CameraTransform update(BlockGetter level, Entity cameraEntity, Vec3 stableAnchor, Vec3 rawPosition, float rawYRot, float rawXRot, float rawRoll, Vec3 anchorLag, float partialTick) {
+        double rawDistance = rawPosition.distanceTo(stableAnchor) * PehkuiCompat.getThirdPersonScale(cameraEntity, partialTick);
         double distance = clamp(
                 rawDistance,
                 FragmentCameraConfig.THIRD_PERSON_RIG_MIN_DISTANCE.get(),

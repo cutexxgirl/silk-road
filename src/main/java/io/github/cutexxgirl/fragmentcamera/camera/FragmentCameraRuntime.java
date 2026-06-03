@@ -122,7 +122,9 @@ public final class FragmentCameraRuntime {
     private CameraTransform updateThirdPerson(BlockGetter level, Entity cameraEntity, Vec3 rawPosition, float rawYRot, float rawXRot, float rawRoll, double deltaSeconds, float partialTick, boolean shoulderSurfing) {
         Vec3 stableAnchor = getStableAnchor(cameraEntity, partialTick);
         Vec3 vanillaEye = cameraEntity.getEyePosition(partialTick);
-        Vec3 rawCameraOffset = rawPosition.subtract(vanillaEye);
+        Vec3 rawCameraOffset = rawPosition.subtract(stableAnchor);
+
+        rawCameraOffset = applyPehkuiThirdPersonScale(rawCameraOffset, cameraEntity, partialTick);
 
         Vec3 smoothedAnchor = anchorSpring.update(
                 stableAnchor,
@@ -132,7 +134,7 @@ public final class FragmentCameraRuntime {
         Vec3 anchorLag = limitLength(smoothedAnchor.subtract(stableAnchor), FragmentCameraConfig.MAX_LAG_DISTANCE.get()).scale(influence);
 
         if (FragmentCameraConfig.EXPERIMENTAL_THIRD_PERSON_RIG_ENABLED.get() && !shoulderSurfing) {
-            return thirdPersonRig.update(level, cameraEntity, stableAnchor, vanillaEye, rawPosition, rawYRot, rawXRot, rawRoll, anchorLag);
+            return thirdPersonRig.update(level, cameraEntity, stableAnchor, rawPosition, rawYRot, rawXRot, rawRoll, anchorLag, partialTick);
         }
 
         Vec3 position = stableAnchor.add(rawCameraOffset).add(anchorLag);
@@ -217,11 +219,22 @@ public final class FragmentCameraRuntime {
         return entity instanceof Player player
                 && minecraft.player == player
                 && (player.getAbilities().flying
+                || (player.getAbilities().mayfly && !player.onGround())
                 || player.isFallFlying()
                 || player.isSpectator()
                 || player.noPhysics
                 || player.isPassenger()
                 || player.isSwimming());
+    }
+
+    private static Vec3 applyPehkuiThirdPersonScale(Vec3 rawCameraOffset, Entity entity, float partialTick) {
+        float scale = PehkuiCompat.getThirdPersonScale(entity, partialTick);
+
+        if (Math.abs(scale - 1.0F) < 0.0001F) {
+            return rawCameraOffset;
+        }
+
+        return rawCameraOffset.scale(scale);
     }
 
     private static boolean hasMeaningfulOffset(double yawOffset, double pitchOffset, double yOffset) {
