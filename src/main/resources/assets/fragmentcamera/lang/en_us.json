@@ -24,9 +24,6 @@
   "fragmentcamera.configuration.maxOrbitLagDistance": "Maximum Orbit Lag Distance",
   "fragmentcamera.configuration.ignoreCrouchHeightInThirdPerson": "Ignore Crouch Height In Third Person",
   "fragmentcamera.configuration.pehkuiCompatEnabled": "Pehkui Compatibility",
-  "fragmentcamera.configuration.experimentalPlayerModelSmoothing": "Experimental Player Model Smoothing",
-  "fragmentcamera.configuration.playerModelVerticalResponse": "Player Model Vertical Response",
-  "fragmentcamera.configuration.playerModelMaxYOffset": "Player Model Max Y Offset",
   "fragmentcamera.configuration.resetDistance": "Reset Distance",
   "fragmentcamera.configuration.aimingItemNamespaces": "Aiming Item Namespaces",
   "fragmentcamera.configuration.aimingItemIds": "Aiming Item IDs"

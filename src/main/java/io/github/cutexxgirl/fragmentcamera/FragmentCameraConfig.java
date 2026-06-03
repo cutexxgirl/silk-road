@@ -72,12 +72,12 @@ public final class FragmentCameraConfig {
             .defineInRange("thirdPersonVerticalDamping", 1.0D, 0.1D, 3.0D);
 
     public static final ModConfigSpec.DoubleValue THIRD_PERSON_ORBIT_FREQUENCY = BUILDER
-            .comment("Third-person rotation spring frequency. Lower values add more mouse-turn smoothing.")
-            .defineInRange("thirdPersonOrbitFrequency", 9.0D, 0.1D, 30.0D);
+            .comment("Third-person orbit spring frequency. Lower values add more mouse-turn smoothing.")
+            .defineInRange("thirdPersonOrbitFrequency", 5.0D, 0.1D, 30.0D);
 
     public static final ModConfigSpec.DoubleValue THIRD_PERSON_ORBIT_DAMPING = BUILDER
-            .comment("Third-person rotation spring damping ratio.")
-            .defineInRange("thirdPersonOrbitDamping", 1.0D, 0.1D, 3.0D);
+            .comment("Third-person orbit spring damping ratio.")
+            .defineInRange("thirdPersonOrbitDamping", 0.9D, 0.1D, 3.0D);
 
     public static final ModConfigSpec.DoubleValue MAX_LAG_DISTANCE = BUILDER
             .comment("Maximum distance the camera spring can lag from the target position.")
@@ -94,18 +94,6 @@ public final class FragmentCameraConfig {
     public static final ModConfigSpec.BooleanValue PEHKUI_COMPAT_ENABLED = BUILDER
             .comment("Scale Shoulder Surfing camera offsets with Pehkui entity size when Pehkui is installed.")
             .define("pehkuiCompatEnabled", true);
-
-    public static final ModConfigSpec.BooleanValue EXPERIMENTAL_PLAYER_MODEL_SMOOTHING = BUILDER
-            .comment("Experimentally smooth the local player model vertically in third person. Render-only.")
-            .define("experimentalPlayerModelSmoothing", false);
-
-    public static final ModConfigSpec.DoubleValue PLAYER_MODEL_VERTICAL_RESPONSE = BUILDER
-            .comment("Local player model vertical smoothing response. Higher values settle faster.")
-            .defineInRange("playerModelVerticalResponse", 18.0D, 1.0D, 80.0D);
-
-    public static final ModConfigSpec.DoubleValue PLAYER_MODEL_MAX_Y_OFFSET = BUILDER
-            .comment("Maximum downward render-only offset for player model smoothing.")
-            .defineInRange("playerModelMaxYOffset", 0.22D, 0.0D, 1.0D);
 
     public static final ModConfigSpec.DoubleValue RESET_DISTANCE = BUILDER
             .comment("Reset springs when the target camera position jumps farther than this many blocks.")
