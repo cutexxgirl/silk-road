@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import io.github.cutexxgirl.fragmentcamera.FragmentCameraConfig;
 import io.github.cutexxgirl.fragmentcamera.compat.PehkuiCompat;
+import io.github.cutexxgirl.fragmentcamera.compat.ShoulderSurfingCompat;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
@@ -124,6 +125,13 @@ public final class FragmentCameraRuntime {
         Vec3 stableAnchor = getStableAnchor(cameraEntity, partialTick);
         Vec3 vanillaEye = cameraEntity.getEyePosition(partialTick);
         Vec3 rawCameraOffset = rawPosition.subtract(stableAnchor);
+        boolean shoulderSurfingOwnedCamera = shoulderSurfing || ShoulderSurfingCompat.isLoaded();
+
+        if (shoulderSurfingOwnedCamera) {
+            anchorXZSpring.reset(new Vec3(stableAnchor.x, 0.0D, stableAnchor.z));
+            thirdPersonVisualY = stableAnchor.y;
+            return CameraTransform.unchanged(rawPosition, rawYRot, rawXRot, rawRoll);
+        }
 
         rawCameraOffset = applyPehkuiThirdPersonScale(rawCameraOffset, cameraEntity, partialTick);
 
@@ -145,7 +153,7 @@ public final class FragmentCameraRuntime {
         Vec3 smoothedAnchor = new Vec3(smoothedAnchorXZ.x, thirdPersonVisualY, smoothedAnchorXZ.z);
         Vec3 anchorLag = limitLength(smoothedAnchor.subtract(stableAnchor), FragmentCameraConfig.MAX_LAG_DISTANCE.get()).scale(influence);
 
-        if (FragmentCameraConfig.EXPERIMENTAL_THIRD_PERSON_RIG_ENABLED.get() && !shoulderSurfing) {
+        if (FragmentCameraConfig.EXPERIMENTAL_THIRD_PERSON_RIG_ENABLED.get()) {
             return thirdPersonRig.update(level, cameraEntity, stableAnchor, rawPosition, rawYRot, rawXRot, rawRoll, anchorLag, partialTick);
         }
 

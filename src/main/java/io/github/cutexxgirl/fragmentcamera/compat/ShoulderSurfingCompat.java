@@ -17,8 +17,12 @@ public final class ShoulderSurfingCompat {
     private ShoulderSurfingCompat() {
     }
 
+    public static boolean isLoaded() {
+        return ModList.get().isLoaded("shouldersurfing");
+    }
+
     public static State getState() {
-        if (!ModList.get().isLoaded("shouldersurfing")) {
+        if (!isLoaded()) {
             return State.EMPTY;
         }
 
