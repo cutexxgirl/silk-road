@@ -1,4 +1,4 @@
-package io.github.cutexxgirl.fragmentcamera.camera;
+﻿package io.github.cutexxgirl.silkroad.camera;
 
 public final class SpringScalar {
     private double position;

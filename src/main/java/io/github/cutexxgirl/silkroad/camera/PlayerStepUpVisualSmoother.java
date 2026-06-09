@@ -1,8 +1,8 @@
-package io.github.cutexxgirl.fragmentcamera.camera;
+﻿package io.github.cutexxgirl.silkroad.camera;
 
 import java.util.UUID;
 
-import io.github.cutexxgirl.fragmentcamera.FragmentCameraConfig;
+import io.github.cutexxgirl.silkroad.SilkroadConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.util.Mth;
@@ -51,9 +51,9 @@ public final class PlayerStepUpVisualSmoother {
             return 0.0D;
         }
 
-        visualY = approachExp(visualY, rawY, FragmentCameraConfig.THIRD_PERSON_STEP_UP_RESPONSE.get(), frameDeltaSeconds());
+        visualY = approachExp(visualY, rawY, SilkroadConfig.THIRD_PERSON_STEP_UP_RESPONSE.get(), frameDeltaSeconds());
 
-        if (Math.abs(visualY - rawY) < FragmentCameraConfig.THIRD_PERSON_STEP_UP_SNAP_THRESHOLD.get()) {
+        if (Math.abs(visualY - rawY) < SilkroadConfig.THIRD_PERSON_STEP_UP_SNAP_THRESHOLD.get()) {
             visualY = rawY;
             smoothingActive = false;
             return 0.0D;
@@ -70,7 +70,7 @@ public final class PlayerStepUpVisualSmoother {
         double tickY = player.getY();
         double dy = tickY - lastTickY;
 
-        if (Math.abs(dy) > FragmentCameraConfig.THIRD_PERSON_STEP_UP_RESET_DISTANCE.get()) {
+        if (Math.abs(dy) > SilkroadConfig.THIRD_PERSON_STEP_UP_RESET_DISTANCE.get()) {
             reset(player, rawY);
             return;
         }
@@ -79,8 +79,8 @@ public final class PlayerStepUpVisualSmoother {
         boolean onGround = player.onGround();
         boolean stepUp = onGround
                 && lastOnGround
-                && dy > FragmentCameraConfig.THIRD_PERSON_STEP_UP_MIN_HEIGHT.get()
-                && dy <= FragmentCameraConfig.THIRD_PERSON_STEP_UP_MAX_HEIGHT.get()
+                && dy > SilkroadConfig.THIRD_PERSON_STEP_UP_MIN_HEIGHT.get()
+                && dy <= SilkroadConfig.THIRD_PERSON_STEP_UP_MAX_HEIGHT.get()
                 && player.getDeltaMovement().y <= 0.08D;
 
         if (stepUp) {
@@ -98,8 +98,8 @@ public final class PlayerStepUpVisualSmoother {
     private boolean shouldReset(Entity entity, LocalPlayer player, Minecraft minecraft) {
         return entity == null
                 || player == null
-                || !FragmentCameraConfig.ENABLED.get()
-                || !FragmentCameraConfig.THIRD_PERSON_STEP_UP_SMOOTHING_ENABLED.get()
+                || !SilkroadConfig.ENABLED.get()
+                || !SilkroadConfig.THIRD_PERSON_STEP_UP_SMOOTHING_ENABLED.get()
                 || minecraft.isPaused()
                 || minecraft.options.getCameraType().isFirstPerson()
                 || !player.isAlive()

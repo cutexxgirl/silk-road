@@ -1,4 +1,4 @@
-package io.github.cutexxgirl.fragmentcamera.mixin;
+﻿package io.github.cutexxgirl.silkroad.mixin;
 
 import java.util.List;
 import java.util.Set;
@@ -7,7 +7,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
-public final class FragmentCameraMixinPlugin implements IMixinConfigPlugin {
+public final class SilkroadMixinPlugin implements IMixinConfigPlugin {
     @Override
     public void onLoad(String mixinPackage) {
     }
@@ -45,7 +45,7 @@ public final class FragmentCameraMixinPlugin implements IMixinConfigPlugin {
 
     private static boolean isClassPresent(String className) {
         try {
-            Class.forName(className, false, FragmentCameraMixinPlugin.class.getClassLoader());
+            Class.forName(className, false, SilkroadMixinPlugin.class.getClassLoader());
             return true;
         } catch (ClassNotFoundException exception) {
             return false;

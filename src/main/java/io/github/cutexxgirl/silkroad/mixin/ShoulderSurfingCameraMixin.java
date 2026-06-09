@@ -1,6 +1,6 @@
-package io.github.cutexxgirl.fragmentcamera.mixin;
+﻿package io.github.cutexxgirl.silkroad.mixin;
 
-import io.github.cutexxgirl.fragmentcamera.camera.FragmentCameraRuntime;
+import io.github.cutexxgirl.silkroad.camera.SilkroadRuntime;
 import net.minecraft.client.Camera;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.BlockGetter;
@@ -20,9 +20,9 @@ public abstract class ShoulderSurfingCameraMixin {
     private double cameraDistance;
 
     @Inject(method = "calcOffset", at = @At("RETURN"), cancellable = true, remap = false)
-    private void fragmentcamera$applyShoulderSurfingLag(Camera camera, BlockGetter level, float partialTick, Entity cameraEntity, CallbackInfoReturnable<Vec3> callbackInfo) {
+    private void silkroad$applyShoulderSurfingLag(Camera camera, BlockGetter level, float partialTick, Entity cameraEntity, CallbackInfoReturnable<Vec3> callbackInfo) {
         Vec3 originalOffset = callbackInfo.getReturnValue();
-        Vec3 offset = FragmentCameraRuntime.INSTANCE.updateShoulderSurfingOffset(camera, level, cameraEntity, originalOffset, partialTick);
+        Vec3 offset = SilkroadRuntime.INSTANCE.updateShoulderSurfingOffset(camera, level, cameraEntity, originalOffset, partialTick);
 
         if (!offset.equals(originalOffset)) {
             this.renderOffset = offset;

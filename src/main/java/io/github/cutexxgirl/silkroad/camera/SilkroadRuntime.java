@@ -1,9 +1,9 @@
-package io.github.cutexxgirl.fragmentcamera.camera;
+﻿package io.github.cutexxgirl.silkroad.camera;
 
 import java.util.UUID;
 
-import io.github.cutexxgirl.fragmentcamera.FragmentCameraConfig;
-import io.github.cutexxgirl.fragmentcamera.compat.PehkuiCompat;
+import io.github.cutexxgirl.silkroad.SilkroadConfig;
+import io.github.cutexxgirl.silkroad.compat.PehkuiCompat;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
@@ -14,8 +14,8 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 
-public final class FragmentCameraRuntime {
-    public static final FragmentCameraRuntime INSTANCE = new FragmentCameraRuntime();
+public final class SilkroadRuntime {
+    public static final SilkroadRuntime INSTANCE = new SilkroadRuntime();
 
     private final SpringScalar yawSpring = new SpringScalar();
     private final SpringScalar pitchSpring = new SpringScalar();
@@ -44,7 +44,7 @@ public final class FragmentCameraRuntime {
     private Vec3 previousThirdPersonLag = Vec3.ZERO;
     private Vec3 currentThirdPersonLag = Vec3.ZERO;
 
-    private FragmentCameraRuntime() {
+    private SilkroadRuntime() {
     }
 
     public CameraTransform update(Camera camera, BlockGetter level, Entity cameraEntity, boolean detached, boolean mirrored, float partialTick) {
@@ -53,7 +53,7 @@ public final class FragmentCameraRuntime {
         float rawXRot = camera.getXRot();
         float rawRoll = camera.getRoll();
 
-        if (!FragmentCameraConfig.ENABLED.get() || cameraEntity == null || Minecraft.getInstance().isPaused()) {
+        if (!SilkroadConfig.ENABLED.get() || cameraEntity == null || Minecraft.getInstance().isPaused()) {
             reset(level, cameraEntity, rawPosition, rawYRot, rawXRot, detached, mirrored, partialTick);
             return CameraTransform.unchanged(rawPosition, rawYRot, rawXRot, rawRoll);
         }
@@ -78,12 +78,12 @@ public final class FragmentCameraRuntime {
         }
 
         AimingDetector.State aimingState = AimingDetector.getState(minecraft);
-        boolean blocked = FragmentCameraConfig.DISABLE_WHILE_AIMING.get() && (aimingState.aiming() || aimingState.freeLooking());
+        boolean blocked = SilkroadConfig.DISABLE_WHILE_AIMING.get() && (aimingState.aiming() || aimingState.freeLooking());
         boolean active = firstPerson
-                ? FragmentCameraConfig.FIRST_PERSON_ROTATION_ENABLED.get() || FragmentCameraConfig.FIRST_PERSON_VERTICAL_ENABLED.get()
-                : FragmentCameraConfig.THIRD_PERSON_ENABLED.get() || FragmentCameraConfig.THIRD_PERSON_ROTATION_ENABLED.get();
+                ? SilkroadConfig.FIRST_PERSON_ROTATION_ENABLED.get() || SilkroadConfig.FIRST_PERSON_VERTICAL_ENABLED.get()
+                : SilkroadConfig.THIRD_PERSON_ENABLED.get() || SilkroadConfig.THIRD_PERSON_ROTATION_ENABLED.get();
         double targetInfluence = active && !blocked ? 1.0D : 0.0D;
-        influence = approachExp(influence, targetInfluence, FragmentCameraConfig.AIM_BLEND_OUT_SPEED.get(), deltaSeconds);
+        influence = approachExp(influence, targetInfluence, SilkroadConfig.AIM_BLEND_OUT_SPEED.get(), deltaSeconds);
 
         CameraTransform transform = firstPerson
                 ? updateFirstPerson(rawPosition, rawYRot, rawXRot, rawRoll, deltaSeconds)
@@ -102,7 +102,7 @@ public final class FragmentCameraRuntime {
     public Vec3 updateShoulderSurfingOffset(Camera camera, BlockGetter level, Entity cameraEntity, Vec3 shoulderOffset, float partialTick) {
         Minecraft minecraft = Minecraft.getInstance();
 
-        if (!FragmentCameraConfig.ENABLED.get()
+        if (!SilkroadConfig.ENABLED.get()
                 || cameraEntity == null
                 || minecraft.isPaused()
                 || shouldBypassThirdPerson(cameraEntity, minecraft)) {
@@ -111,7 +111,7 @@ public final class FragmentCameraRuntime {
             return shoulderOffset;
         }
 
-        if (!FragmentCameraConfig.THIRD_PERSON_ENABLED.get()) {
+        if (!SilkroadConfig.THIRD_PERSON_ENABLED.get()) {
             shoulderSurfingOffsetHandledThisFrame = true;
             return shoulderOffset;
         }
@@ -121,7 +121,7 @@ public final class FragmentCameraRuntime {
         }
 
         Vec3 stableAnchor = getStableAnchor(cameraEntity, partialTick);
-        Vec3 anchorLag = FragmentCameraConfig.THIRD_PERSON_ENABLED.get()
+        Vec3 anchorLag = SilkroadConfig.THIRD_PERSON_ENABLED.get()
                 ? updateThirdPersonAnchorLag(cameraEntity, partialTick).scale(influence)
                 : Vec3.ZERO;
         lastAnchor = stableAnchor;
@@ -149,8 +149,8 @@ public final class FragmentCameraRuntime {
         Minecraft minecraft = Minecraft.getInstance();
 
         if (!detached
-                || !FragmentCameraConfig.ENABLED.get()
-                || !FragmentCameraConfig.THIRD_PERSON_ROTATION_ENABLED.get()
+                || !SilkroadConfig.ENABLED.get()
+                || !SilkroadConfig.THIRD_PERSON_ROTATION_ENABLED.get()
                 || cameraEntity == null
                 || minecraft.isPaused()
                 || shouldBypassThirdPerson(cameraEntity, minecraft)) {
@@ -164,7 +164,7 @@ public final class FragmentCameraRuntime {
             reset(level, cameraEntity, rawPosition, rawYRot, rawXRot, detached, mirrored, partialTick);
         }
 
-        boolean blocked = FragmentCameraConfig.DISABLE_WHILE_AIMING.get() && (aimingState.aiming() || aimingState.freeLooking());
+        boolean blocked = SilkroadConfig.DISABLE_WHILE_AIMING.get() && (aimingState.aiming() || aimingState.freeLooking());
         double rotationInfluence = blocked ? 0.0D : influence;
         RotationTransform rotation = updateThirdPersonRotation(rawYRot, rawXRot, thirdPersonRotationDeltaSeconds(), rotationInfluence);
         return new CameraTransform(rawPosition, rotation.yRot(), rotation.xRot(), rawRoll, rotation.changed());
@@ -177,26 +177,26 @@ public final class FragmentCameraRuntime {
         double smoothedYaw = yawSpring.update(
                 continuousYaw,
                 deltaSeconds,
-                FragmentCameraConfig.FIRST_PERSON_ROTATION_FREQUENCY.get(),
-                FragmentCameraConfig.FIRST_PERSON_ROTATION_DAMPING.get());
+                SilkroadConfig.FIRST_PERSON_ROTATION_FREQUENCY.get(),
+                SilkroadConfig.FIRST_PERSON_ROTATION_DAMPING.get());
         double smoothedPitch = pitchSpring.update(
                 rawXRot,
                 deltaSeconds,
-                FragmentCameraConfig.FIRST_PERSON_ROTATION_FREQUENCY.get(),
-                FragmentCameraConfig.FIRST_PERSON_ROTATION_DAMPING.get());
+                SilkroadConfig.FIRST_PERSON_ROTATION_FREQUENCY.get(),
+                SilkroadConfig.FIRST_PERSON_ROTATION_DAMPING.get());
         visualY = approachExp(
                 visualY,
                 rawPosition.y,
-                FragmentCameraConfig.FIRST_PERSON_VERTICAL_RESPONSE.get(),
+                SilkroadConfig.FIRST_PERSON_VERTICAL_RESPONSE.get(),
                 deltaSeconds);
 
-        if (Math.abs(visualY - rawPosition.y) < FragmentCameraConfig.FIRST_PERSON_VERTICAL_SNAP_THRESHOLD.get()) {
+        if (Math.abs(visualY - rawPosition.y) < SilkroadConfig.FIRST_PERSON_VERTICAL_SNAP_THRESHOLD.get()) {
             visualY = rawPosition.y;
         }
 
-        double yawOffset = FragmentCameraConfig.FIRST_PERSON_ROTATION_ENABLED.get() ? (smoothedYaw - continuousYaw) * influence : 0.0D;
-        double pitchOffset = FragmentCameraConfig.FIRST_PERSON_ROTATION_ENABLED.get() ? (smoothedPitch - rawXRot) * influence : 0.0D;
-        double yOffset = FragmentCameraConfig.FIRST_PERSON_VERTICAL_ENABLED.get() ? (visualY - rawPosition.y) * influence : 0.0D;
+        double yawOffset = SilkroadConfig.FIRST_PERSON_ROTATION_ENABLED.get() ? (smoothedYaw - continuousYaw) * influence : 0.0D;
+        double pitchOffset = SilkroadConfig.FIRST_PERSON_ROTATION_ENABLED.get() ? (smoothedPitch - rawXRot) * influence : 0.0D;
+        double yOffset = SilkroadConfig.FIRST_PERSON_VERTICAL_ENABLED.get() ? (visualY - rawPosition.y) * influence : 0.0D;
         Vec3 position = rawPosition.add(0.0D, yOffset, 0.0D);
         return new CameraTransform(position, (float) (rawYRot + yawOffset), (float) (rawXRot + pitchOffset), rawRoll, hasMeaningfulOffset(yawOffset, pitchOffset, yOffset));
     }
@@ -210,7 +210,7 @@ public final class FragmentCameraRuntime {
             return CameraTransform.unchanged(rawPosition, rawYRot, rawXRot, rawRoll);
         }
 
-        Vec3 anchorLag = FragmentCameraConfig.THIRD_PERSON_ENABLED.get()
+        Vec3 anchorLag = SilkroadConfig.THIRD_PERSON_ENABLED.get()
                 ? updateThirdPersonAnchorLag(cameraEntity, partialTick).scale(influence)
                 : Vec3.ZERO;
 
@@ -219,7 +219,7 @@ public final class FragmentCameraRuntime {
             return new CameraTransform(position, rawYRot, rawXRot, rawRoll, anchorLag.lengthSqr() > 1.0E-8D);
         }
 
-        if (FragmentCameraConfig.EXPERIMENTAL_THIRD_PERSON_RIG_ENABLED.get()) {
+        if (SilkroadConfig.EXPERIMENTAL_THIRD_PERSON_RIG_ENABLED.get()) {
             return thirdPersonRig.update(level, cameraEntity, stableAnchor, rawPosition, rawYRot, rawXRot, rawRoll, anchorLag, partialTick);
         }
 
@@ -238,7 +238,7 @@ public final class FragmentCameraRuntime {
                 || lastMirrored != mirrored
                 || !entity.isAlive()
                 || lastAnchor == null
-                || lastAnchor.distanceTo(anchor) > FragmentCameraConfig.RESET_DISTANCE.get();
+                || lastAnchor.distanceTo(anchor) > SilkroadConfig.RESET_DISTANCE.get();
     }
 
     private void reset(BlockGetter level, Entity entity, Vec3 rawPosition, float rawYRot, float rawXRot, boolean detached, boolean mirrored, float partialTick) {
@@ -317,27 +317,27 @@ public final class FragmentCameraRuntime {
         }
 
         Vec3 renderLag = previousThirdPersonLag.lerp(currentThirdPersonLag, Mth.clamp(partialTick, 0.0F, 1.0F));
-        return limitLength(renderLag, FragmentCameraConfig.MAX_LAG_DISTANCE.get());
+        return limitLength(renderLag, SilkroadConfig.MAX_LAG_DISTANCE.get());
     }
 
     private Vec3 updateThirdPersonAnchorLagForTick(Vec3 stableAnchor) {
         Vec3 smoothedAnchorXZ = anchorXZSpring.update(
                 new Vec3(stableAnchor.x, 0.0D, stableAnchor.z),
                 1.0D / 20.0D,
-                FragmentCameraConfig.THIRD_PERSON_POSITION_FREQUENCY.get(),
-                FragmentCameraConfig.THIRD_PERSON_POSITION_DAMPING.get());
+                SilkroadConfig.THIRD_PERSON_POSITION_FREQUENCY.get(),
+                SilkroadConfig.THIRD_PERSON_POSITION_DAMPING.get());
         thirdPersonVisualY = approachExp(
                 thirdPersonVisualY,
                 stableAnchor.y,
-                FragmentCameraConfig.THIRD_PERSON_VERTICAL_RESPONSE.get(),
+                SilkroadConfig.THIRD_PERSON_VERTICAL_RESPONSE.get(),
                 1.0D / 20.0D);
 
-        if (Math.abs(thirdPersonVisualY - stableAnchor.y) < FragmentCameraConfig.THIRD_PERSON_VERTICAL_SNAP_THRESHOLD.get()) {
+        if (Math.abs(thirdPersonVisualY - stableAnchor.y) < SilkroadConfig.THIRD_PERSON_VERTICAL_SNAP_THRESHOLD.get()) {
             thirdPersonVisualY = stableAnchor.y;
         }
 
         Vec3 smoothedAnchor = new Vec3(smoothedAnchorXZ.x, thirdPersonVisualY, smoothedAnchorXZ.z);
-        return limitLength(smoothedAnchor.subtract(stableAnchor), FragmentCameraConfig.MAX_LAG_DISTANCE.get());
+        return limitLength(smoothedAnchor.subtract(stableAnchor), SilkroadConfig.MAX_LAG_DISTANCE.get());
     }
 
     private RotationTransform updateThirdPersonRotation(float rawYRot, float rawXRot, double deltaSeconds, double rotationInfluence) {
@@ -347,13 +347,13 @@ public final class FragmentCameraRuntime {
         double smoothedYaw = thirdPersonYawSpring.update(
                 continuousThirdPersonYaw,
                 deltaSeconds,
-                FragmentCameraConfig.THIRD_PERSON_ROTATION_FREQUENCY.get(),
-                FragmentCameraConfig.THIRD_PERSON_ROTATION_DAMPING.get());
+                SilkroadConfig.THIRD_PERSON_ROTATION_FREQUENCY.get(),
+                SilkroadConfig.THIRD_PERSON_ROTATION_DAMPING.get());
         double smoothedPitch = thirdPersonPitchSpring.update(
                 rawXRot,
                 deltaSeconds,
-                FragmentCameraConfig.THIRD_PERSON_ROTATION_FREQUENCY.get(),
-                FragmentCameraConfig.THIRD_PERSON_ROTATION_DAMPING.get());
+                SilkroadConfig.THIRD_PERSON_ROTATION_FREQUENCY.get(),
+                SilkroadConfig.THIRD_PERSON_ROTATION_DAMPING.get());
 
         double yawOffset = (smoothedYaw - continuousThirdPersonYaw) * rotationInfluence;
         double pitchOffset = (smoothedPitch - rawXRot) * rotationInfluence;
@@ -379,7 +379,7 @@ public final class FragmentCameraRuntime {
     }
 
     private static Vec3 getStableAnchor(Entity entity, float partialTick) {
-        if (FragmentCameraConfig.IGNORE_CROUCH_HEIGHT_IN_THIRD_PERSON.get() && entity instanceof Player player) {
+        if (SilkroadConfig.IGNORE_CROUCH_HEIGHT_IN_THIRD_PERSON.get() && entity instanceof Player player) {
             Vec3 position = player.getPosition(partialTick);
             double standingEyeHeight = player.getDimensions(Pose.STANDING).eyeHeight();
 

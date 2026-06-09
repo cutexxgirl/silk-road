@@ -1,7 +1,7 @@
-package io.github.cutexxgirl.fragmentcamera.mixin;
+﻿package io.github.cutexxgirl.silkroad.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import io.github.cutexxgirl.fragmentcamera.camera.PlayerStepUpVisualSmoother;
+import io.github.cutexxgirl.silkroad.camera.PlayerStepUpVisualSmoother;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(EntityRenderDispatcher.class)
 public abstract class EntityRenderDispatcherMixin {
     @Inject(method = "render", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/PoseStack;translate(DDD)V", ordinal = 0, shift = Shift.AFTER))
-    private <E extends Entity> void fragmentcamera$applyLocalPlayerStepUpSmoothing(
+    private <E extends Entity> void silkroad$applyLocalPlayerStepUpSmoothing(
             E entity,
             double x,
             double y,

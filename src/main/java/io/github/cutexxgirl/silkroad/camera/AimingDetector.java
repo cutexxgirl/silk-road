@@ -1,7 +1,7 @@
-package io.github.cutexxgirl.fragmentcamera.camera;
+﻿package io.github.cutexxgirl.silkroad.camera;
 
-import io.github.cutexxgirl.fragmentcamera.FragmentCameraConfig;
-import io.github.cutexxgirl.fragmentcamera.compat.ShoulderSurfingCompat;
+import io.github.cutexxgirl.silkroad.SilkroadConfig;
+import io.github.cutexxgirl.silkroad.compat.ShoulderSurfingCompat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -51,8 +51,8 @@ public final class AimingDetector {
         ResourceLocation id = BuiltInRegistries.ITEM.getKey(stack.getItem());
         String itemId = id.toString();
         String namespace = id.getNamespace();
-        return FragmentCameraConfig.AIMING_ITEM_IDS.get().contains(itemId)
-                || FragmentCameraConfig.AIMING_ITEM_NAMESPACES.get().contains(namespace);
+        return SilkroadConfig.AIMING_ITEM_IDS.get().contains(itemId)
+                || SilkroadConfig.AIMING_ITEM_NAMESPACES.get().contains(namespace);
     }
 
     public record State(boolean aiming, boolean shoulderSurfing, boolean freeLooking) {

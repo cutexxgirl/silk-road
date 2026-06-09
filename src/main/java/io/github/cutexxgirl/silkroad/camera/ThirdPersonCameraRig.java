@@ -1,7 +1,7 @@
-package io.github.cutexxgirl.fragmentcamera.camera;
+﻿package io.github.cutexxgirl.silkroad.camera;
 
-import io.github.cutexxgirl.fragmentcamera.FragmentCameraConfig;
-import io.github.cutexxgirl.fragmentcamera.compat.PehkuiCompat;
+import io.github.cutexxgirl.silkroad.SilkroadConfig;
+import io.github.cutexxgirl.silkroad.compat.PehkuiCompat;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ClipContext;
@@ -13,8 +13,8 @@ public final class ThirdPersonCameraRig {
         double rawDistance = rawPosition.distanceTo(stableAnchor) * PehkuiCompat.getThirdPersonScale(cameraEntity, partialTick);
         double distance = clamp(
                 rawDistance,
-                FragmentCameraConfig.THIRD_PERSON_RIG_MIN_DISTANCE.get(),
-                FragmentCameraConfig.THIRD_PERSON_RIG_MAX_DISTANCE.get());
+                SilkroadConfig.THIRD_PERSON_RIG_MIN_DISTANCE.get(),
+                SilkroadConfig.THIRD_PERSON_RIG_MAX_DISTANCE.get());
         Vec3 anchor = stableAnchor.add(anchorLag);
         Vec3 desiredPosition = anchor.subtract(forwardFromYawPitch(rawYRot, rawXRot).scale(distance));
         Vec3 position = clipToWorld(level, cameraEntity, anchor, desiredPosition);
@@ -32,7 +32,7 @@ public final class ThirdPersonCameraRig {
         Vec3 hitPosition = hit.getLocation();
         Vec3 fromAnchor = hitPosition.subtract(anchor);
         double distance = fromAnchor.length();
-        double padding = FragmentCameraConfig.THIRD_PERSON_RIG_COLLISION_PADDING.get();
+        double padding = SilkroadConfig.THIRD_PERSON_RIG_COLLISION_PADDING.get();
 
         if (distance <= padding) {
             return anchor;

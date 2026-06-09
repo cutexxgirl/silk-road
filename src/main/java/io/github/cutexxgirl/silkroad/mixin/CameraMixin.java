@@ -1,9 +1,9 @@
-package io.github.cutexxgirl.fragmentcamera.mixin;
+﻿package io.github.cutexxgirl.silkroad.mixin;
 
-import io.github.cutexxgirl.fragmentcamera.FragmentCameraConfig;
-import io.github.cutexxgirl.fragmentcamera.camera.CameraTransform;
-import io.github.cutexxgirl.fragmentcamera.camera.FragmentCameraRuntime;
-import io.github.cutexxgirl.fragmentcamera.compat.PehkuiCompat;
+import io.github.cutexxgirl.silkroad.SilkroadConfig;
+import io.github.cutexxgirl.silkroad.camera.CameraTransform;
+import io.github.cutexxgirl.silkroad.camera.SilkroadRuntime;
+import io.github.cutexxgirl.silkroad.compat.PehkuiCompat;
 import net.minecraft.client.Camera;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Pose;
@@ -31,8 +31,8 @@ public abstract class CameraMixin {
     protected abstract void setRotation(float yRot, float xRot, float roll);
 
     @Inject(method = "setup", at = @At("HEAD"))
-    private void fragmentcamera$ignoreThirdPersonCrouchHeight(BlockGetter level, Entity cameraEntity, boolean detached, boolean mirrored, float partialTick, CallbackInfo callbackInfo) {
-        if (!detached || !FragmentCameraConfig.ENABLED.get() || !FragmentCameraConfig.IGNORE_CROUCH_HEIGHT_IN_THIRD_PERSON.get() || !(cameraEntity instanceof Player player)) {
+    private void silkroad$ignoreThirdPersonCrouchHeight(BlockGetter level, Entity cameraEntity, boolean detached, boolean mirrored, float partialTick, CallbackInfo callbackInfo) {
+        if (!detached || !SilkroadConfig.ENABLED.get() || !SilkroadConfig.IGNORE_CROUCH_HEIGHT_IN_THIRD_PERSON.get() || !(cameraEntity instanceof Player player)) {
             return;
         }
 
@@ -48,9 +48,9 @@ public abstract class CameraMixin {
     }
 
     @Inject(method = "setup", at = @At("RETURN"))
-    private void fragmentcamera$applySpringCamera(BlockGetter level, Entity cameraEntity, boolean detached, boolean mirrored, float partialTick, CallbackInfo callbackInfo) {
+    private void silkroad$applySpringCamera(BlockGetter level, Entity cameraEntity, boolean detached, boolean mirrored, float partialTick, CallbackInfo callbackInfo) {
         Camera camera = (Camera) (Object) this;
-        CameraTransform transform = FragmentCameraRuntime.INSTANCE.update(camera, level, cameraEntity, detached, mirrored, partialTick);
+        CameraTransform transform = SilkroadRuntime.INSTANCE.update(camera, level, cameraEntity, detached, mirrored, partialTick);
 
         if (transform.changed()) {
             this.setPosition(transform.position());
@@ -59,9 +59,9 @@ public abstract class CameraMixin {
     }
 
     @Inject(method = "setup", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Camera;move(FFF)V", ordinal = 0))
-    private void fragmentcamera$applyThirdPersonRotationBeforeMove(BlockGetter level, Entity cameraEntity, boolean detached, boolean mirrored, float partialTick, CallbackInfo callbackInfo) {
+    private void silkroad$applyThirdPersonRotationBeforeMove(BlockGetter level, Entity cameraEntity, boolean detached, boolean mirrored, float partialTick, CallbackInfo callbackInfo) {
         Camera camera = (Camera) (Object) this;
-        CameraTransform transform = FragmentCameraRuntime.INSTANCE.prepareThirdPersonRotation(camera, level, cameraEntity, detached, mirrored, partialTick);
+        CameraTransform transform = SilkroadRuntime.INSTANCE.prepareThirdPersonRotation(camera, level, cameraEntity, detached, mirrored, partialTick);
 
         if (transform.changed()) {
             this.setRotation(transform.yRot(), transform.xRot(), transform.roll());

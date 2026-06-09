@@ -26,7 +26,15 @@ sourceSets.main.resources {
 }
 
 repositories {
-    // Add here additional repositories if required by some of the dependencies below.
+    mavenCentral()
+    maven {
+        name = "FzzyMaven"
+        url = "https://maven.fzzyhmstrs.me/"
+    }
+    maven {
+        name = "KotlinForForge"
+        url = "https://thedarkcolour.github.io/KotlinForForge/"
+    }
 }
 
 base {
@@ -103,6 +111,7 @@ dependencies {
     // And its provides the option to then use net.minecraft as the group, and one of; client, server or joined as the module name, plus the game version as version.
     // For all intends and purposes: You can treat this dependency as if it is a normal library you would use.
     implementation "net.neoforged:neoforge:${neo_version}"
+    implementation "me.fzzyhmstrs:fzzy_config:${fzzy_config_version}"
 
     // Example optional mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
@@ -141,6 +150,7 @@ tasks.withType(ProcessResources).configureEach {
             mod_name               : mod_name,
             mod_license            : mod_license,
             mod_version            : mod_version,
+            fzzy_config_version     : fzzy_config_version,
     ]
     inputs.properties replaceProperties
 
