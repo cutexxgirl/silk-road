@@ -1,4 +1,4 @@
-﻿package io.github.cutexxgirl.silkroad.camera;
+package io.github.cutexxgirl.silkroad.camera;
 
 import net.minecraft.world.phys.Vec3;
 

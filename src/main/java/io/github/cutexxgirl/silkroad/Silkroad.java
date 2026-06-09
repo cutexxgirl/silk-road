@@ -1,4 +1,4 @@
-﻿package io.github.cutexxgirl.silkroad;
+package io.github.cutexxgirl.silkroad;
 
 import com.mojang.logging.LogUtils;
 import net.neoforged.bus.api.IEventBus;

@@ -1,4 +1,4 @@
-﻿package io.github.cutexxgirl.silkroad.mixin;
+package io.github.cutexxgirl.silkroad.mixin;
 
 import io.github.cutexxgirl.silkroad.camera.SilkroadRuntime;
 import net.minecraft.client.Camera;

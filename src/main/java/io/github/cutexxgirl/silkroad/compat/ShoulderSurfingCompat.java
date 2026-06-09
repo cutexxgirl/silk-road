@@ -1,4 +1,4 @@
-﻿package io.github.cutexxgirl.silkroad.compat;
+package io.github.cutexxgirl.silkroad.compat;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;

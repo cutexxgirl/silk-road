@@ -1,4 +1,4 @@
-﻿package io.github.cutexxgirl.silkroad.mixin;
+package io.github.cutexxgirl.silkroad.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.cutexxgirl.silkroad.camera.PlayerStepUpVisualSmoother;

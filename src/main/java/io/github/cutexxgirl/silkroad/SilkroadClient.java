@@ -1,4 +1,4 @@
-﻿package io.github.cutexxgirl.silkroad;
+package io.github.cutexxgirl.silkroad;
 
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;

@@ -1,4 +1,4 @@
-﻿package io.github.cutexxgirl.silkroad.mixin;
+package io.github.cutexxgirl.silkroad.mixin;
 
 import io.github.cutexxgirl.silkroad.SilkroadConfig;
 import io.github.cutexxgirl.silkroad.camera.CameraTransform;

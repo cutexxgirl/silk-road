@@ -1,4 +1,4 @@
-﻿package io.github.cutexxgirl.silkroad.mixin;
+package io.github.cutexxgirl.silkroad.mixin;
 
 import java.util.List;
 import java.util.Set;

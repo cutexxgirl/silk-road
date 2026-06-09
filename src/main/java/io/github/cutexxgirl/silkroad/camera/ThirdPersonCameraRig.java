@@ -1,4 +1,4 @@
-﻿package io.github.cutexxgirl.silkroad.camera;
+package io.github.cutexxgirl.silkroad.camera;
 
 import io.github.cutexxgirl.silkroad.SilkroadConfig;
 import io.github.cutexxgirl.silkroad.compat.PehkuiCompat;
