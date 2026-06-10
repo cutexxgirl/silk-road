@@ -1,9 +1,13 @@
 package io.github.cutexxgirl.silkroad.mixin;
 
 import io.github.cutexxgirl.silkroad.camera.SilkroadRuntime;
+import io.github.cutexxgirl.silkroad.compat.PehkuiCompat;
 import net.minecraft.client.Camera;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -51,5 +55,48 @@ public abstract class ShoulderSurfingCameraMixin {
             this.cameraDistance = offset.length();
             callbackInfo.setReturnValue(offset);
         }
+    }
+
+    @Inject(method = "maxZoom", at = @At("HEAD"), cancellable = true, remap = false)
+    private static void silkroad$applyPehkuiShoulderSurfingZoom(Camera camera, BlockGetter level, Vec3 cameraOffset, float partialTick, CallbackInfoReturnable<Double> callbackInfo) {
+        Entity cameraEntity = camera.getEntity();
+
+        if (cameraEntity == null || Math.abs(PehkuiCompat.getEyeHeightScale(cameraEntity, partialTick) - 1.0F) < 0.0001F) {
+            return;
+        }
+
+        double distance = cameraOffset.length();
+        Vec3 worldOffset = new Vec3(camera.getUpVector()).scale(cameraOffset.y())
+                .add(new Vec3(camera.getLeftVector()).scale(cameraOffset.x()))
+                .add(new Vec3(camera.getLookVector()).scale(-cameraOffset.z()));
+        Vec3 horizontalPush = new Vec3(worldOffset.x, 0.0D, worldOffset.z);
+
+        if (horizontalPush.lengthSqr() > 1.0E-8D) {
+            horizontalPush = horizontalPush.normalize().scale(0.3D);
+        }
+
+        Vec3 eyePosition = cameraEntity.getEyePosition(partialTick);
+
+        for (int i = 0; i < 8; i++) {
+            Vec3 offset = new Vec3(i & 1, i >> 1 & 1, i >> 2 & 1)
+                    .scale(2.0D)
+                    .subtract(1.0D, 1.0D, 1.0D)
+                    .scale(0.15D)
+                    .yRot(-camera.getYRot() * Mth.DEG_TO_RAD);
+            Vec3 from = eyePosition.add(offset).add(horizontalPush);
+            Vec3 to = from.add(worldOffset);
+            ClipContext context = new ClipContext(from, to, ClipContext.Block.VISUAL, ClipContext.Fluid.NONE, cameraEntity);
+            HitResult hitResult = level.clip(context);
+
+            if (hitResult.getType() != HitResult.Type.MISS) {
+                double newDistance = hitResult.getLocation().distanceTo(eyePosition);
+
+                if (newDistance < distance) {
+                    distance = newDistance;
+                }
+            }
+        }
+
+        callbackInfo.setReturnValue(distance);
     }
 }
