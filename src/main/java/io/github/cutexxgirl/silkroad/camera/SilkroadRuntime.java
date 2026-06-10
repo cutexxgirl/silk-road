@@ -100,7 +100,7 @@ public final class SilkroadRuntime {
         return transform;
     }
 
-    public Vec3 updateShoulderSurfingOffset(Camera camera, BlockGetter level, Entity cameraEntity, Vec3 shoulderOffset, float partialTick) {
+    public Vec3 updateShoulderSurfingOffset(Camera camera, BlockGetter level, Entity cameraEntity, Vec3 shoulderOffset, float partialTick, boolean shoulderTargetOffsetScaled) {
         Minecraft minecraft = Minecraft.getInstance();
 
         if (!SilkroadConfig.ENABLED.get()
@@ -112,7 +112,9 @@ public final class SilkroadRuntime {
             return shoulderOffset;
         }
 
-        Vec3 scaledShoulderOffset = applyPehkuiThirdPersonScale(shoulderOffset, cameraEntity, partialTick);
+        Vec3 scaledShoulderOffset = shoulderTargetOffsetScaled
+                ? shoulderOffset
+                : applyPehkuiThirdPersonScale(shoulderOffset, cameraEntity, partialTick);
 
         if (!SilkroadConfig.THIRD_PERSON_ENABLED.get()) {
             shoulderSurfingOffsetHandledThisFrame = true;
@@ -142,6 +144,10 @@ public final class SilkroadRuntime {
         // Shoulder Surfing stores camera offset in its local left/up/back basis.
         // Feeding the lag there keeps its transparency and pick logic in sync.
         return scaledShoulderOffset.add(worldLagToShoulderOffset(camera, anchorLag));
+    }
+
+    public double updateShoulderSurfingTargetOffsetScale(double shoulderSurfingScale, Entity cameraEntity, float partialTick) {
+        return shoulderSurfingScale * PehkuiCompat.getThirdPersonScale(cameraEntity, partialTick);
     }
 
     public CameraTransform prepareThirdPersonRotation(Camera camera, BlockGetter level, Entity cameraEntity, boolean detached, boolean mirrored, float partialTick) {
