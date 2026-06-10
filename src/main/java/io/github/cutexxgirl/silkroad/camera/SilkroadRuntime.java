@@ -123,7 +123,7 @@ public final class SilkroadRuntime {
 
         Vec3 stableAnchor = getStableAnchor(cameraEntity, partialTick);
         Vec3 anchorLag = SilkroadConfig.THIRD_PERSON_ENABLED.get()
-                ? updateThirdPersonAnchorLag(cameraEntity, partialTick, stableAnchor).scale(influence)
+                ? applyPehkuiLagScale(updateThirdPersonAnchorLag(cameraEntity, partialTick, stableAnchor), cameraEntity, partialTick).scale(influence)
                 : Vec3.ZERO;
         lastAnchor = stableAnchor;
         lastDetached = true;
@@ -212,7 +212,7 @@ public final class SilkroadRuntime {
         }
 
         Vec3 anchorLag = SilkroadConfig.THIRD_PERSON_ENABLED.get()
-                ? updateThirdPersonAnchorLag(cameraEntity, partialTick, stableAnchor).scale(influence)
+                ? applyPehkuiLagScale(updateThirdPersonAnchorLag(cameraEntity, partialTick, stableAnchor), cameraEntity, partialTick).scale(influence)
                 : Vec3.ZERO;
 
         if (shoulderSurfing) {
@@ -441,6 +441,16 @@ public final class SilkroadRuntime {
         }
 
         return rawCameraOffset.scale(scale);
+    }
+
+    private static Vec3 applyPehkuiLagScale(Vec3 anchorLag, Entity entity, float partialTick) {
+        float scale = Mth.clamp(PehkuiCompat.getEyeHeightScale(entity, partialTick), 0.05F, 1.0F);
+
+        if (Math.abs(scale - 1.0F) < 0.0001F) {
+            return anchorLag;
+        }
+
+        return anchorLag.scale(scale);
     }
 
     private static boolean hasMeaningfulOffset(double yawOffset, double pitchOffset, double yOffset) {
