@@ -5,6 +5,7 @@ import io.github.cutexxgirl.silkroad.compat.PehkuiCompat;
 import net.minecraft.client.Camera;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.HitResult;
@@ -14,7 +15,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(targets = "com.github.exopandora.shouldersurfing.client.ShoulderSurfingCamera", remap = false)
@@ -33,16 +34,16 @@ public abstract class ShoulderSurfingCameraMixin {
         this.silkroad$targetOffsetScaled = false;
     }
 
-    @ModifyArg(
+    @Redirect(
             method = "calcOffset",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/phys/Vec3;scale(D)Lnet/minecraft/world/phys/Vec3;", ordinal = 0),
-            index = 0,
+            at = @At(value = "INVOKE", target = "Lcom/github/exopandora/shouldersurfing/api/util/EntityHelper;getMaxScale(Lnet/minecraft/world/entity/Entity;)F"),
             require = 0,
             remap = false)
-    private double silkroad$scaleShoulderSurfingTargetOffset(double scale, Camera camera, BlockGetter level, float partialTick, Entity cameraEntity) {
+    private float silkroad$scaleShoulderSurfingTargetOffset(Entity scaleEntity, Camera camera, BlockGetter level, float partialTick, Entity cameraEntity) {
+        double scale = silkroad$getShoulderSurfingMaxScale(scaleEntity);
         double scaled = SilkroadRuntime.INSTANCE.updateShoulderSurfingTargetOffsetScale(scale, cameraEntity, partialTick);
         this.silkroad$targetOffsetScaled = Math.abs(scaled - scale) > 1.0E-4D;
-        return scaled;
+        return (float) scaled;
     }
 
     @Inject(method = "calcOffset", at = @At("RETURN"), cancellable = true, remap = false)
@@ -98,5 +99,23 @@ public abstract class ShoulderSurfingCameraMixin {
         }
 
         callbackInfo.setReturnValue(distance);
+    }
+
+    @Unique
+    private static float silkroad$getShoulderSurfingMaxScale(Entity cameraEntity) {
+        Entity entity = cameraEntity;
+        float scale = silkroad$getShoulderSurfingEntityScale(entity);
+
+        while (entity.getVehicle() != null) {
+            entity = entity.getVehicle();
+            scale = Math.max(scale, silkroad$getShoulderSurfingEntityScale(entity));
+        }
+
+        return scale;
+    }
+
+    @Unique
+    private static float silkroad$getShoulderSurfingEntityScale(Entity entity) {
+        return entity instanceof LivingEntity living ? living.getScale() : 1.0F;
     }
 }
