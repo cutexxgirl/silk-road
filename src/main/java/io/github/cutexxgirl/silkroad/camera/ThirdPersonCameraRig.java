@@ -1,7 +1,6 @@
 package io.github.cutexxgirl.silkroad.camera;
 
 import io.github.cutexxgirl.silkroad.SilkroadConfig;
-import io.github.cutexxgirl.silkroad.compat.PehkuiCompat;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ClipContext;
@@ -10,7 +9,7 @@ import net.minecraft.world.phys.Vec3;
 
 public final class ThirdPersonCameraRig {
     public CameraTransform update(BlockGetter level, Entity cameraEntity, Vec3 stableAnchor, Vec3 rawPosition, float rawYRot, float rawXRot, float rawRoll, Vec3 anchorLag, float partialTick) {
-        double rawDistance = rawPosition.distanceTo(stableAnchor) * PehkuiCompat.getThirdPersonScale(cameraEntity, partialTick);
+        double rawDistance = rawPosition.distanceTo(stableAnchor);
         double distance = clamp(
                 rawDistance,
                 SilkroadConfig.THIRD_PERSON_RIG_MIN_DISTANCE.get(),
