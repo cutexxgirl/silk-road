@@ -41,6 +41,7 @@ public final class SilkroadRuntime {
     private boolean thirdPersonBypassedLastFrame;
     private boolean shoulderSurfingOffsetHandledThisFrame;
     private int lastThirdPersonTick = Integer.MIN_VALUE;
+    private double lastThirdPersonAnchorHeight = Double.NaN;
     private Vec3 previousThirdPersonLag = Vec3.ZERO;
     private Vec3 currentThirdPersonLag = Vec3.ZERO;
 
@@ -122,7 +123,7 @@ public final class SilkroadRuntime {
 
         Vec3 stableAnchor = getStableAnchor(cameraEntity, partialTick);
         Vec3 anchorLag = SilkroadConfig.THIRD_PERSON_ENABLED.get()
-                ? updateThirdPersonAnchorLag(cameraEntity, partialTick).scale(influence)
+                ? updateThirdPersonAnchorLag(cameraEntity, partialTick, stableAnchor).scale(influence)
                 : Vec3.ZERO;
         lastAnchor = stableAnchor;
         lastDetached = true;
@@ -211,7 +212,7 @@ public final class SilkroadRuntime {
         }
 
         Vec3 anchorLag = SilkroadConfig.THIRD_PERSON_ENABLED.get()
-                ? updateThirdPersonAnchorLag(cameraEntity, partialTick).scale(influence)
+                ? updateThirdPersonAnchorLag(cameraEntity, partialTick, stableAnchor).scale(influence)
                 : Vec3.ZERO;
 
         if (shoulderSurfing) {
@@ -263,6 +264,7 @@ public final class SilkroadRuntime {
         thirdPersonBypassedLastFrame = false;
         shoulderSurfingOffsetHandledThisFrame = false;
         lastThirdPersonTick = entity == null ? Integer.MIN_VALUE : entity.tickCount;
+        lastThirdPersonAnchorHeight = entity == null ? Double.NaN : getAnchorHeight(entity, anchor, partialTick);
         previousThirdPersonLag = Vec3.ZERO;
         currentThirdPersonLag = Vec3.ZERO;
         initialized = true;
@@ -308,9 +310,12 @@ public final class SilkroadRuntime {
         return vector.normalize().scale(maxLength);
     }
 
-    private Vec3 updateThirdPersonAnchorLag(Entity entity, float partialTick) {
+    private Vec3 updateThirdPersonAnchorLag(Entity entity, float partialTick, Vec3 stableAnchor) {
+        alignThirdPersonHeightChange(entity, stableAnchor, partialTick);
+
         if (entity.tickCount != lastThirdPersonTick) {
             Vec3 tickStableAnchor = getStableAnchor(entity, 1.0F);
+            alignThirdPersonHeightChange(entity, tickStableAnchor, 1.0F);
             previousThirdPersonLag = currentThirdPersonLag;
             currentThirdPersonLag = updateThirdPersonAnchorLagForTick(tickStableAnchor);
             lastThirdPersonTick = entity.tickCount;
@@ -318,6 +323,28 @@ public final class SilkroadRuntime {
 
         Vec3 renderLag = previousThirdPersonLag.lerp(currentThirdPersonLag, Mth.clamp(partialTick, 0.0F, 1.0F));
         return limitLength(renderLag, SilkroadConfig.MAX_LAG_DISTANCE.get());
+    }
+
+    private void alignThirdPersonHeightChange(Entity entity, Vec3 stableAnchor, float partialTick) {
+        if (SilkroadConfig.IGNORE_CROUCH_HEIGHT_IN_THIRD_PERSON.get()) {
+            return;
+        }
+
+        double anchorHeight = getAnchorHeight(entity, stableAnchor, partialTick);
+
+        if (Double.isNaN(lastThirdPersonAnchorHeight)) {
+            lastThirdPersonAnchorHeight = anchorHeight;
+            return;
+        }
+
+        if (Math.abs(anchorHeight - lastThirdPersonAnchorHeight) < 1.0E-4D) {
+            return;
+        }
+
+        thirdPersonVisualY = stableAnchor.y;
+        previousThirdPersonLag = new Vec3(previousThirdPersonLag.x, 0.0D, previousThirdPersonLag.z);
+        currentThirdPersonLag = new Vec3(currentThirdPersonLag.x, 0.0D, currentThirdPersonLag.z);
+        lastThirdPersonAnchorHeight = anchorHeight;
     }
 
     private Vec3 updateThirdPersonAnchorLagForTick(Vec3 stableAnchor) {
@@ -391,6 +418,10 @@ public final class SilkroadRuntime {
         }
 
         return entity.getEyePosition(partialTick);
+    }
+
+    private static double getAnchorHeight(Entity entity, Vec3 stableAnchor, float partialTick) {
+        return stableAnchor.y - entity.getPosition(partialTick).y;
     }
 
     private static boolean shouldBypassThirdPerson(Entity entity, Minecraft minecraft) {
