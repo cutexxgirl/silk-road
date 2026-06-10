@@ -112,9 +112,11 @@ public final class SilkroadRuntime {
             return shoulderOffset;
         }
 
+        Vec3 scaledShoulderOffset = applyPehkuiThirdPersonScale(shoulderOffset, cameraEntity, partialTick);
+
         if (!SilkroadConfig.THIRD_PERSON_ENABLED.get()) {
             shoulderSurfingOffsetHandledThisFrame = true;
-            return shoulderOffset;
+            return scaledShoulderOffset;
         }
 
         if (shouldReset(level, cameraEntity, true, false, partialTick)) {
@@ -134,12 +136,12 @@ public final class SilkroadRuntime {
         shoulderSurfingOffsetHandledThisFrame = true;
 
         if (anchorLag.lengthSqr() <= 1.0E-8D) {
-            return shoulderOffset;
+            return scaledShoulderOffset;
         }
 
         // Shoulder Surfing stores camera offset in its local left/up/back basis.
         // Feeding the lag there keeps its transparency and pick logic in sync.
-        return shoulderOffset.add(worldLagToShoulderOffset(camera, anchorLag));
+        return scaledShoulderOffset.add(worldLagToShoulderOffset(camera, anchorLag));
     }
 
     public CameraTransform prepareThirdPersonRotation(Camera camera, BlockGetter level, Entity cameraEntity, boolean detached, boolean mirrored, float partialTick) {
