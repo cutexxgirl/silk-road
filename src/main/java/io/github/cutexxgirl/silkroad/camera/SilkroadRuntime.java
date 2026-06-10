@@ -147,7 +147,18 @@ public final class SilkroadRuntime {
     }
 
     public double updateShoulderSurfingTargetOffsetScale(double shoulderSurfingScale, Entity cameraEntity, float partialTick) {
-        return shoulderSurfingScale * PehkuiCompat.getThirdPersonScale(cameraEntity, partialTick);
+        float eyeHeightScale = PehkuiCompat.getEyeHeightScale(cameraEntity, partialTick);
+        float thirdPersonScale = PehkuiCompat.getThirdPersonScale(cameraEntity, partialTick);
+
+        if (Math.abs(thirdPersonScale - 1.0F) < 0.0001F) {
+            return shoulderSurfingScale;
+        }
+
+        if (eyeHeightScale > 0.0001F && Math.abs(shoulderSurfingScale - eyeHeightScale) < 0.0001D) {
+            return shoulderSurfingScale * (thirdPersonScale / eyeHeightScale);
+        }
+
+        return shoulderSurfingScale * thirdPersonScale;
     }
 
     public CameraTransform prepareThirdPersonRotation(Camera camera, BlockGetter level, Entity cameraEntity, boolean detached, boolean mirrored, float partialTick) {
@@ -452,7 +463,10 @@ public final class SilkroadRuntime {
     }
 
     private static Vec3 applyPehkuiLagScale(Vec3 anchorLag, Entity entity, float partialTick) {
-        float scale = Mth.clamp(PehkuiCompat.getEyeHeightScale(entity, partialTick), 0.05F, 1.0F);
+        float eyeHeightScale = PehkuiCompat.getEyeHeightScale(entity, partialTick);
+        float thirdPersonScale = PehkuiCompat.getThirdPersonScale(entity, partialTick);
+        float compactScale = Mth.clamp(Math.min(eyeHeightScale, thirdPersonScale), 0.05F, 1.0F);
+        float scale = compactScale * compactScale;
 
         if (Math.abs(scale - 1.0F) < 0.0001F) {
             return anchorLag;
